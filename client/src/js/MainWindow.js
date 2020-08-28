@@ -22,6 +22,7 @@ const useStyles = makeStyles((theme) => ({
         }
     }
 }));
+}));
 function MainWindow({ startCall, clientId }) {
     const classes = useStyles();
 
@@ -37,14 +38,7 @@ function MainWindow({ startCall, clientId }) {
         const config = { audio: true, video };
         return () => roomID && startCall(true, roomID, config);
     };
-    const onClick = (e) => {
-        if (e.shiftKey || e.ctrlKey) {
-            actions.startCascade();
-        } else {
-            actions.register({ roomID, controlValue, userID });
-        }
-        // actions.fakeStreams()
-    };
+
     return (
         <div className="bg-wite">
             <div style={ { textAlign: 'center', width: '100%' } }>
@@ -98,7 +92,7 @@ function MainWindow({ startCall, clientId }) {
                                         color="primary"
                                         onClick={ actions.startCascade }
                                     >
-                                        Cacade
+                                        Cascade
               </Button>
                                 </div>
                                 <br />
@@ -109,16 +103,16 @@ function MainWindow({ startCall, clientId }) {
                                     <Button
                                         variant="contained"
                                         color="primary"
-                                        onClick={ actions.startChat }
+                                        onClick={ actions.joinRoom }
                                     >
-                                        Chat
+                                        Join
               </Button>
                                 </div>
                                 <div className="inline m-2">
                                     <Button
                                         variant="contained"
                                         color="primary"
-                                        onClick={ actions.endChat }
+                                        onClick={ actions.leaveRoom }
                                     >
                                         End
               </Button>
@@ -149,3 +143,6 @@ function MainWindow({ startCall, clientId }) {
 
 export default MainWindow;
 
+}
+
+export default MainWindow;
