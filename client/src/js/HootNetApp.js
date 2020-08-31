@@ -57,16 +57,15 @@ class App extends Component {
 
             })
             .on('startcall', (data) => {
-                const leader = data.jointo
                 // socket.emit('debug', 'startcall received')
                 // console.log('join received', data)
-                this.startCallHandler(true, leader, { video: true, audio: true }, data)
+                this.startCallHandler(true, data.responder, { video: true, audio: true }, data)
             })
             .on('joincall', (data) => {
 
-                console.log("joincall")
+                console.log("joincall", data)
                 const opts = { id: this.state.clientId + 'R' }
-                this.startCallHandler(false, data.from, { video: true, audio: true }, data)
+                this.startCallHandler(false, data.initiator, { video: true, audio: true }, data)
             })
             .on('call', (data) => {
                 const pc = this.pcs[data.from]

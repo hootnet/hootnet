@@ -11,6 +11,11 @@ const configs = addBaseConfig({
     module: {
         rules: [
             {
+                test: /\.js$/,
+                enforce: 'pre',
+                use: ['source-map-loader'],
+            },
+            {
                 test: /\.scss$/,
                 use: ["style-loader", "css-loader", "sass-loader"]
             },

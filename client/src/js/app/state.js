@@ -3,6 +3,11 @@ const state = {
     changeMedia: false,
     streamNumber: 0,
     mediaDevices: [],
+    peerData:
+    {
+        connections: {},
+        sequence: 0
+    },
     AppState: {
         room: '',
         clientId: '',
