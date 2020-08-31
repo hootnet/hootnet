@@ -5,8 +5,7 @@ import PeerConnection from "../PeerConnection";
 import VideoStreamMerger from "../streamutils/video-stream-merger";
 
 const actions = {
-    test({state,actions})
-    {
+    test({ state, actions }) {
         console.log("RUNNING RELOAD TEST")
     }
     ,
@@ -112,7 +111,7 @@ const actions = {
                 actions.relayAction({
                     to: member,
                     op: "startcall",
-                    data: { jointo: state.attrs.id, role: 'chat' }
+                    data: { initiator: member, responder: state.attrs.id, role: 'chat' }
                 });
             }
         });
@@ -149,7 +148,7 @@ const actions = {
             actions.relayAction({
                 to: member,
                 op: "startcall",
-                data: { jointo: state.nextMember, role: 'cascade' }
+                data: { initiator: member, responder: state.nextMember, role: 'cascade' }
             });
         });
     },
@@ -158,7 +157,7 @@ const actions = {
             actions.relayAction({
                 to: state.nextMember,
                 op: "startcall",
-                data: { jointo: member, role: 'control' }
+                data: { initiator: state.nextMember, responder: member, role: 'control' }
             });
             state.nextMember = member;
         });
@@ -170,7 +169,7 @@ const actions = {
             actions.relayAction({
                 to: controller,
                 op: "startcall",
-                data: { jointo: member, role: 'view' }
+                data: { initiator: controller, responder: member, role: 'view' }
             });
         });
     },
@@ -305,7 +304,7 @@ const actions = {
     //         actions.relayAction({
     //             to: member,
     //             op: "startcall",
-    //             data: { jointo: nextMember }
+    //             data: { responder: nextMember }
     //         })
     //     })
     //     state.sessions.controllers.map((member, sequence) => {
@@ -313,7 +312,7 @@ const actions = {
     //         actions.relayAction({
     //             to: nextMember,
     //             op: "startcall",
-    //             data: { jointo: member }
+    //             data: { responder: member }
     //         })
     //         nextMember = member
     //     })

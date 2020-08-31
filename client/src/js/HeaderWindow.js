@@ -16,12 +16,11 @@ const HeaderWindow = () => {
     const [stream, setStream] = React.useState(null)
     const [refs, setRefs] = React.useState({})
     useEffect(() => {
-        actions.test()},
-        [])
+        effects.setActionsAndState(actions, state)
+        actions.test()
+    }, [])
     useEffect(() => {
         // console.log('Effect is applied')
-        effects.setActionsAndState(actions, state)
-
         mediaDevice.on('stream', (stream) => {
             actions.addStream({ name: 'localStream', stream, from: "HeaderWindow onStream" })
             // actions.startChat()
