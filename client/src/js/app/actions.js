@@ -5,6 +5,11 @@ import PeerConnection from "../PeerConnection";
 import VideoStreamMerger from "../streamutils/video-stream-merger";
 
 const actions = {
+    test({ state, actions }) {
+        console.log("RUNNING RELOAD TEST")
+    }
+    ,
+
     setMediaDevices({ state }, mediaDevices) {
         state.mediaDevices = mediaDevices
     },
@@ -38,16 +43,16 @@ const actions = {
         actions.startControllers();
         actions.startViewers();
     },
-    startChat({ state, actions }) {
-        state.members.forEach(id => {
-            actions.relayAction({
-                to: id,
-                op: "startChat",
-                data: { from: state.attrs.id }
-            });
-        });
-    },
-    endChat({ state, actions }) {
+    // startChat({ state, actions }) {
+    //     state.members.forEach(id => {
+    //         actions.relayAction({
+    //             to: id,
+    //             op: "startChat",
+    //             data: { from: state.attrs.id }
+    //         });
+    //     });
+    // },
+    endAllStreams({ state, actions }) {
         state.members.forEach(id => {
             actions.relayAction({
                 to: id,
@@ -56,36 +61,63 @@ const actions = {
             });
         });
     },
-    initiatesTo({ state }, member) {
-        return state.attrs.id < member
+    initiatesTo({ state, actions }, member) {
+        if (state.attrs.id < member) {
+            // actions.diag(state.attrs.id + " initiates to " + member)
+            return true
+        } else {
+            // actions.diag(state.attrs.id + " does not initiate to " + member)
+            return false
+        }
     },
-    startChatters({ state, actions }) {
-        if (state.isChatting) return
-        state.isChatting = true
-        actions.setStatus('chatting')
-
+    leaveRoom({ state, actions }) {
+        state.currentWindow = "main"
+        actions.setRoomStatus("left")
+        actions.endStreams()
+    },
+    joinRoom({ state, actions }) {
+        actions.setRoomStatus('joined')
+        state.currentWindow = 'chat'
+        actions.connectRoom()
+    },
+    connectRoom({ state, actions }) {
+        if (!state.streams.localStream) {
+            diag("local stream not running when trying to connect")
+            setTimeout(connectRoom, 1000)
+        }
+        let allPresent = true
         state.members.map((member, sequence) => {
-            if (!state.users[member]) return // not set up yet
-            if (!state.users[member].remoteStream) state.users[member].remoteStream = new MediaStream()
-            if (actions.initiatesTo(member) && (state.users[member].status !== 'connected')) {
-                actions.diag("initiating chat")
-                if (state.users[member]) {
-                    state.users[member].status = 'calling'
-                    actions.relayAction({
-                        to: member,
-                        op: "calljoin",
-                        data: { jointo: state.attrs.id, role: 'chat' }
-                    });
-                }
+            if (!state.users[member]) {
+                allPresent = false
+                actions.relayAction({ to: member, op: "getInfo" });
+            }
+        })
+        //If not all present, try again in a minute
+        if (!allPresent) setTimeout(() => {
+            actions.reconnect()
+
+        }, 1000);
+        // console.log("connecting to ", state.members)
+        state.members.map((member, sequence) => {
+            if (!state.users[member]) return
+            if (state.users[member].roomStatus !== 'joined') return
+            // if (state.users[member].initStatus) return
+            const newStream = new MediaStream()
+            newStream.streamNumber = state.streamNumber++
+            state.users[member].remoteStream = newStream
+
+            if (actions.initiatesTo(member)) {
+                state.users[member].initStatus = true
+                actions.relayAction({
+                    to: member,
+                    op: "startcall",
+                    data: { initiator: member, responder: state.attrs.id, role: 'chat' }
+                });
             }
         });
     },
-    endChatters({ state, actions, effects }, data) {
+    endStreams({ state, actions, effects }, data) {
         console.log("ENDING CHATTERS    ")
-        if (!state.isChatting) return
-        state.isChatting = false;
-        actions.setStatus('registered')
-        actions.setMessage(`Ending chat for room '${state.attrs.room}'.`);
         // actions.endCall({ from: state.attrs.id })
         state.members.forEach(id => {
             actions.relayAction({
@@ -93,14 +125,19 @@ const actions = {
                 op: "end",
                 data: { from: state.attrs.id }
             });
-            if (state.users[id] && state.users[id].remoteStream) {
-                const stream = json(state.users[id].remoteStream)
-                state.users[id].remoteStream = new MediaStream()
-                stream.getTracks().forEach(track => {
-                    track.stop()
-                    stream.removeTrack(track)
-                })
-            }
+            actions.relayAction({
+                to: state.attrs.id,
+                op: "end",
+                data: { from: id }
+            });
+            // if (state.users[id] && state.users[id].remoteStream) {
+            //     const stream = json(state.users[id].remoteStream)
+            //     state.users[id].remoteStream = new MediaStream()
+            //     stream.getTracks().forEach(track => {
+            //         track.stop()
+            //         stream.removeTrack(track)
+            //     })
+            // }
         }
         )
 
@@ -110,8 +147,8 @@ const actions = {
             state.nextMember = state.sessions.cascaders[sequence + 1];
             actions.relayAction({
                 to: member,
-                op: "calljoin",
-                data: { jointo: state.nextMember, role: 'cascade' }
+                op: "startcall",
+                data: { initiator: member, responder: state.nextMember, role: 'cascade' }
             });
         });
     },
@@ -119,8 +156,8 @@ const actions = {
         state.sessions.controllers.map((member, sequence) => {
             actions.relayAction({
                 to: state.nextMember,
-                op: "calljoin",
-                data: { jointo: member, role: 'control' }
+                op: "startcall",
+                data: { initiator: state.nextMember, responder: member, role: 'control' }
             });
             state.nextMember = member;
         });
@@ -131,51 +168,70 @@ const actions = {
             const controller = state.sessions.controllers[sequence % nControllers];
             actions.relayAction({
                 to: controller,
-                op: "calljoin",
-                data: { jointo: member, role: 'view' }
+                op: "startcall",
+                data: { initiator: controller, responder: member, role: 'view' }
             });
         });
     },
     startCall({ state, actions }, { isCaller, friendID, config, data }) {
-        if (!state.streams.localStream) {
+        if (!state.streams.localStream || !state.users[friendID]) {
+            console.log("Retrying with ", { friendID }, state.streams.localStream, json(state.users[friendID]))
             const retryCall = () => {
                 actions.startCall({ isCaller, friendID, config, data })
             }
             setTimeout(retryCall, 1000)
+            return
         }
-        if (!state.isChatting) {
-            actions.setStatus('connecting')
-            actions.setupStreams();
-            actions.showCallPage();
-        }
+        // actions.setRoomStatus('connecting')
+        // if (!state.isCascading) {
+        //     actions.setupStreams();
+        //     actions.showCallPage();
+        // }
         const pc = new PeerConnection(friendID, state);
+        state.users[friendID].peerConnection = pc
         state.callInfo[friendID] = {
             pc,
             config,
             isCaller,
-            data
+            data,
+            status: 'connecting'
         };
         pc
             .on('localStream', (src) => {
             })
             .on('peerTrackEvent', (e) => {
                 const src = e.streams[0]
+                // actions.setRoomStatus('connected')
                 actions.peerTrackEvent({ friendID, event: e })
             })
             .startPeer(isCaller, config, state);
+        pc.pc.oniceconnectionstatechange = (event) => {
+            const message = `Ice connection state change for ${friendID} ${pc.pc.iceConnectionState}`
+            actions.diag(message)
+
+        }
+        pc.pc.onconnectionstatechange = (event) => {
+            const message = `Connection state change for ${friendID} ${pc.pc.connectionState}`
+            actions.diag(message)
+            // actions.setConnectionStatus({ id: friendID, status: pc.pc.connectionState })
+
+        }
         return pc;
+    },
+    setConnectionStatus({ state }, { id, status }) {
+        state.users[id].connectionStatus = status
+
     },
     showCallPage({ state }) {
         if (state.index !== -1) {
             //part of cascade
-            state.showCascade = true;
+            state.currentWindow = "cascade";
         } else if (state.attrs.control && (
             parseInt(state.attrs.control, 10) ||
             state.attrs.control.toLowerCase() === "control" ||
             state.attrs.control.toLowerCase() === "viewer")
         ) {
-            state.showControlRoom = true;
-            state.showCascade = true;
+            state.currentWindow = "control";
         }
     },
 
@@ -196,37 +252,42 @@ const actions = {
         }
     },
     endCall({ state, actions }, { isStarter, from }) {
-        actions.clearCascade();
-        state.users[from].status = 'disconnected'
+        // actions.clearCascade();
+        // actions.setRoomStatus('disconnected')
+        actions.setConnectionStatus({ id: from, status: 'disconnected' })
+        state.users[from].initStatus = false
+        if (state.users[from] && state.users[from].remoteStream) {
+            const stream = json(state.users[from].remoteStream)
+            state.users[from].remoteStream = null
+            stream.getTracks().forEach(track => {
+                track.stop()
+                stream.removeTrack(track)
+            })
+        }
+
+
         if (state.callInfo[from] && !state.callInfo[from].stopped) {
             const callInfo = json(state.callInfo[from]);
             callInfo.pc.stop(isStarter.from);
             state.callInfo[from] = {
                 pc: null,
-                stopped: true
+                stopped: true,
+                status: 'disconnected'
             };
         }
+
     },
     peerTrackEvent({ state, actions }, { friendID, event: e }) {
+        state.peerEvents = state.peerEvents + 1
         const src = e.streams[0];
         const stream = json(state.users[friendID].remoteStream)
-        if (state.isChatting) {
-            state.users[state.attrs.id].status
-            state.users[friendID].status = 'connected'
-            const tracks = src.getTracks()
-            tracks.forEach(track => {
-                // console.log("adding a track", track.kind)
-                stream.addTrack(track, src)
-            })
-        } else {
-            const pc = json(state.callInfo[friendID].pc);
-            pc.peerSrc = src;
-            state.callInfo[friendID] = {
-                pc,
-                stopped: false
-            };
-            actions.addPeerToCascade(src);
-        }
+        actions.setConnectionStatus({ id: friendID, status: 'connected' })
+        const tracks = src.getTracks()
+        tracks.forEach(track => {
+            // console.log("adding a track", track.kind)
+            stream.addTrack(track, src)
+        })
+
     },
     // relayAction({ state, effects }, { to, op, data }) {
     //     effects.socket.actions.relayEffect(to, op, data)
@@ -242,24 +303,23 @@ const actions = {
     //         nextMember = state.sessions.cascaders[sequence + 1]
     //         actions.relayAction({
     //             to: member,
-    //             op: "calljoin",
-    //             data: { jointo: nextMember }
+    //             op: "startcall",
+    //             data: { responder: nextMember }
     //         })
     //     })
     //     state.sessions.controllers.map((member, sequence) => {
 
     //         actions.relayAction({
     //             to: nextMember,
-    //             op: "calljoin",
-    //             data: { jointo: member }
+    //             op: "startcall",
+    //             data: { responder: member }
     //         })
     //         nextMember = member
     //     })
     // },
     clearCascade({ state }) {
         console.log("clear cascade")
-        state.showCascade = false;
-        state.showControlRoom = false;
+        state.currentWindow = "chat";
         delete state.streams.cascadeStream;
         if (state.streams.cascadeMerger) {
             json(state.streams.cascadeMerger).destroy();
@@ -283,9 +343,7 @@ const actions = {
             });
         });
     },
-    createUser({ state }, id) {
-        if (!state.users[id]) state.users[id] = {};
-    },
+
     deleteUserEntry({ state }, id) {
         const user = state.users[id]
         if (user.remoteStream) {
@@ -327,7 +385,7 @@ const actions = {
         })
         actions.computeCategories();
     },
-    computeCategories({ state }) {
+    computeCategories({ state, actions }) {
         let cascaders = [];
         const controllers = [];
         const viewers = [];
@@ -339,9 +397,9 @@ const actions = {
             if (seq) {
                 if (!cascaders[seq]) cascaders[seq] = [];
                 cascaders[seq].push(key);
-            } else if (control.toLowerCase() === "control") {
+            } else if (control && control.toLowerCase() === "control") {
                 controllers.push(key);
-            } else if (control.toLowerCase() === "viewer") {
+            } else if (control && control.toLowerCase() === "viewer") {
                 viewers.push(key);
             } else {
                 actions.setMessage(
@@ -369,25 +427,25 @@ const actions = {
     },
     toggleReady({ state, actions }) {
         if (state.users[state.attrs.id].status !== 'ready') {
-            actions.setStatus('ready')
+            actions.setRoomStatus('ready')
         } else {
-            actions.setStatus('wait!')
+            actions.setRoomStatus('wait!')
         }
         actions.broadcastUserInfo()
     },
     setUserInfo({ state, actions }, data) {
         const id = data.id;
         delete data.id;
-        console.log("got user info for ", id)
-        actions.createUser(id);
+        // console.log("got user info for ", id)
+        if (!state.users[id]) state.users[id] = {};
+
         for (const key in data) {
             state.users[id][key] = data[key];
         }
         state.users[id].opacity = 1
         actions.computeCategories();
-        // if (!state.showCascade && !state.isChatting && state.allSessions.length > 1) {
-        //     actions.startChat()
-        // }
+        if (state.attrs.roomStatus === 'joined') actions.connectRoom()
+
 
     },
     setMessage({ state, actions }, value = "default message") {
@@ -413,10 +471,7 @@ const actions = {
         state.diags.push(diag);
     },
 
-    // flashCascade({ state, actions }) {
-    //     state.showCascade = true
-    //     setTimeout(() => actions.clearCascade(), 5000)
-    // },
+
     addStream({ state }, { name, stream }) {
         state.streams[name] = stream;
     },
@@ -460,8 +515,9 @@ const actions = {
     clearEvents({ state }) {
         state.events = [];
     },
-    setStatus({ state }, status) {
-        state.attrs.status = status;
+    setRoomStatus({ state, actions }, status) {
+        state.attrs.roomStatus = status;
+        actions.broadcastUserInfo()
     },
 
     setAttrs({ state, effects }, attrs) {
@@ -486,6 +542,7 @@ const actions = {
         effects.storage.setAttrs(json(state.attrs));
     },
     register({ state, actions, effects }, data) {
+        state.peerEvents++
         let error = false;
         if (data.controlValue !== "undefined") {
             state.attrs.control = data.controlValue;
@@ -505,10 +562,10 @@ const actions = {
             actions.setMessage("Missing room name");
             error = true;
         }
-        // console.log('registering ', json(state.attrs))
+        console.log('registering ', json(state.attrs))
         effects.storage.setAttrs(json(state.attrs));
         if (!error) {
-            actions.setStatus('registered')
+            actions.setRoomStatus('registered')
             actions.broadcastUserInfo()
             effects.socket.actions.register(json(state.attrs));
         }

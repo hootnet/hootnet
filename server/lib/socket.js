@@ -112,14 +112,17 @@ function initSocket(socket) {
 
         })
         .on('debug', (message) => { console.log("debug", message) })
-        .on('request', (data) => {
-            console.log(`request to ${data.to}`)
-            const receiver = users.getReceiver(data.to);
+        .on('joincall', (data) => {
+            console.log("joincall", data)
+            // data.from = id
+            const receiver = users.getReceiver(data.responder);
             if (receiver) {
-                receiver.emit('request', { from: id });
+                receiver.emit('joincall', data);
             }
         })
         .on('call', (data) => {
+            const keys = Object.keys(data)
+            console.log("call message", { to: data.to, from: id, keys })
             const receiver = users.getReceiver(data.to);
             if (receiver) {
                 receiver.emit('call', { ...data, from: id });

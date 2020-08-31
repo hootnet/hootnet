@@ -22,14 +22,13 @@ const useStyles = makeStyles((theme) => ({
         }
     }
 }));
-}));
 function MainWindow({ startCall, clientId }) {
     const classes = useStyles();
 
     const { state, actions } = useApp();
     const [roomID, setRoomID] = useQueryState("room", "main");
-    const [controlValue, setControlValue] = useState(state.attrs.control);
-    const [userID, setUserID] = useState(state.attrs.name);
+    const [controlValue, setControlValue] = useState(state.attrs.control || '');
+    const [userID, setUserID] = useState(state.attrs.name || '');
     /**
      * Start the call with or without video
      * @param {Boolean} video
@@ -143,6 +142,3 @@ function MainWindow({ startCall, clientId }) {
 
 export default MainWindow;
 
-}
-
-export default MainWindow;

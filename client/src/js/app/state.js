@@ -1,7 +1,13 @@
 const state = {
     title: 'This title',
     changeMedia: false,
+    streamNumber: 0,
     mediaDevices: [],
+    peerData:
+    {
+        connections: {},
+        sequence: 0
+    },
     AppState: {
         room: '',
         clientId: '',
@@ -12,15 +18,15 @@ const state = {
 
     },
     diags: [],
-    showCascade: false,
-    showControlRoom: false,
-    isChatting: false,
+    currentWindow: "main",
+    isCascading: false,
     attrs: {
         id: 'undefined',
         name: "undefined",
         role: "undefined",
         room: "main",
-        status: "disconnected"
+        status: "disconnected",
+        roomStatus: "none"
     },
     index: -1, //index in cascade. -1 if not in cascade
     nextMember: null,
@@ -30,6 +36,7 @@ const state = {
     sessions: {},
     allSessions: [],
     users: {}, // keyed list of users with their data
+    peerEvents: 0,
     _message: {
         text: '',
         delay: 1000
