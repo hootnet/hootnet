@@ -20,6 +20,7 @@
         "bootstrap-sass": "3.4.1",
         "classnames": "2.2.6",
         "css-loader": "3.4.2",
+        "dotenv": "8.2.0",
         "expose-loader": "0.7.5",
         "express": "4.17.1",
         "file-loader": "6.0.0",
