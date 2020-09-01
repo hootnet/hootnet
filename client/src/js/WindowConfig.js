@@ -10,8 +10,8 @@ import { useApp } from './app';
 const WindowConfig = ({ startCallHandler }) => {
   const { state, actions } = useApp();
   const currentWindow = (startCallHandler) => {
-    // switch (state.currentWindow) {
-    switch ('director') {
+    switch (state.currentWindow) {
+      // switch ('main') {
       case 'main':
       case 'chat':
         return (
