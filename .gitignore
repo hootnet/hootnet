@@ -1,3 +1,4 @@
+.env
 client/dist/
 client/index.html
 node_modules/**
