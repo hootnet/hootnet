@@ -14,26 +14,6 @@ const configs = addBaseConfig({
                 test: /\.js$/,
                 enforce: 'pre',
                 use: ['source-map-loader'],
-            },
-            {
-                test: /\.scss$/,
-                use: ["style-loader", "css-loader", "sass-loader"]
-            },
-            {
-                test: /\.css$/,
-                use: ["style-loader", "css-loader", "postcss-loader"]
-            },
-            {
-                test: /\.(png|woff|woff2|eot|ttf|svg)$/,
-                use: [
-                    {
-                        loader: "file-loader",
-                        options: {
-                            name: "[name].[ext]",
-                            outputPath: "assets"
-                        }
-                    }
-                ]
             }
         ]
     },
