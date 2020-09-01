@@ -10,7 +10,7 @@ const VideoTile = ({ id }) => {
     const ref = React.useRef(null)
 
     React.useEffect(() => {
-        actions.diag('VideoTile effect ' + state.peerEvents)
+        // actions.diag('VideoTile effect ' + state.peerEvents)
         if (ref && ref.current) {
             if (state.attrs.id === id) {
                 console.log("Ref for ", id, "set to local stream")

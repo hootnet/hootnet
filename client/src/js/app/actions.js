@@ -251,18 +251,19 @@ const actions = {
         state.users[id].connectionStatus = status
 
     },
-    showCallPage({ state }) {
-        if (state.index !== -1) {
-            //part of cascade
-            state.currentWindow = "cascade";
-        } else if (state.attrs.control && (
-            parseInt(state.attrs.control, 10) ||
-            state.attrs.control.toLowerCase() === "control" ||
-            state.attrs.control.toLowerCase() === "viewer")
-        ) {
-            state.currentWindow = "control";
-        }
-    },
+    // showCallPage({ state }) {
+    //     if (state.index !== -1) {
+    //         //part of cascade
+    //         state.currentWindow = "cascade";
+    //     } else if (state.attrs.control && (
+    //         parseInt(state.attrs.control, 10) ||
+    //         state.attrs.control.toLowerCase() === "control" ||
+    //         state.attrs.control.toLowerCase() === "viewer"
+    //     )
+    //     ) {
+    //         state.currentWindow = "control";
+    //     }
+    // },
 
     // setupStreams({ st`ate, actions }, opts) {
     //   const id = state.attrs.id;
@@ -418,6 +419,8 @@ const actions = {
         let cascaders = [];
         const controllers = [];
         const viewers = [];
+        const members = [];
+        const directors = []
         state.members.forEach(key => {
             const user = state.users[key];
             if (!user) return;
@@ -426,22 +429,32 @@ const actions = {
             if (seq) {
                 if (!cascaders[seq]) cascaders[seq] = [];
                 cascaders[seq].push(key);
-            } else if (control && control.toLowerCase() === "control") {
-                controllers.push(key);
-            } else if (control && control.toLowerCase() === "viewer") {
-                viewers.push(key);
-            } else {
-                actions.setMessage(
-                    'Control must be a number, or "control" or "viewer"'
-                );
+            } else if (control) {
+                if (control.toLowerCase() === "control") {
+                    controllers.push(key);
+                } else if (control.toLowerCase() === "director") {
+                    directors.push(key)
+                } else if (control.toLowerCase() === "member") {
+                    members.push(key)
+                } else if (control.toLowerCase() === "viewer") {
+                    viewers.push(key);
+                } else {
+                    console.log("CONTROL iS", control)
+                    actions.setMessage(
+                        'Control must be a number, or "control" or "member"'
+                    );
+
+                }
             }
         });
         cascaders = cascaders.flat().filter(a => a);
-        state.allSessions = cascaders.concat(controllers).concat(viewers);
+        state.allSessions = cascaders.concat(controllers).concat(viewers).concat(members).concat(directors);
         state.sessions = {
             cascaders,
             controllers,
-            viewers
+            viewers,
+            members,
+            directors
         };
         state.index = state.sessions.cascaders.findIndex(e => e === state.attrs.id);
     },
@@ -478,11 +491,11 @@ const actions = {
 
     },
     setMessage({ state, actions }, value = "default message") {
-        console.log("Setmessage", state)
+        // console.log("Setmessage", state)
         state._message.text = value;
         toast(value, {
             position: "top-center",
-            autoClose: 2000,
+            autoClose: 4000,
             hideProgressBar: true,
             closeOnClick: true,
             pauseOnHover: true,
@@ -571,7 +584,9 @@ const actions = {
         effects.storage.setAttrs(json(state.attrs));
     },
     register({ state, actions, effects }, data) {
+        console.log("Registered now again!!!!!")
         state.peerEvents++
+
         let error = false;
         if (data.controlValue !== "undefined") {
             state.attrs.control = data.controlValue;
@@ -591,7 +606,7 @@ const actions = {
             actions.setMessage("Missing room name");
             error = true;
         }
-        console.log('registering ', json(state.attrs))
+        // console.log('registering ', json(state.attrs))
         effects.storage.setAttrs(json(state.attrs));
         if (!error) {
             actions.setRoomStatus('registered')

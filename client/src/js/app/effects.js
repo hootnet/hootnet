@@ -25,7 +25,7 @@ const effects = {
                 socket.emit('relay', { ...params, to, op, from: effects.state.attrs.id })
             },
             register(data) {
-                console.log('send register', data)
+                // console.log('send register', data)
                 socket.emit('register', data)
             },
             debug(data) {
