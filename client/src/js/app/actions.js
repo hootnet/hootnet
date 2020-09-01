@@ -8,6 +8,11 @@ const actions = {
     test({ state, actions }) {
         console.log("RUNNING RELOAD TEST")
     },
+    editor: {
+        set({ state }, text) {
+            state.directorText = text;
+        },
+    },
     newConnnectionID({ state }) {
         state.peerData.connectionSequence++;
         return state.attrs.id + '-c-' + state.peerData.connectionSequence;
@@ -439,6 +444,7 @@ const actions = {
                 } else if (control.toLowerCase() === "viewer") {
                     viewers.push(key);
                 } else {
+                    debugger
                     console.log("CONTROL iS", control)
                     actions.setMessage(
                         'Control must be a number, or "control" or "member"'
@@ -584,7 +590,6 @@ const actions = {
         effects.storage.setAttrs(json(state.attrs));
     },
     register({ state, actions, effects }, data) {
-        console.log("Registered now again!!!!!")
         state.peerEvents++
 
         let error = false;

@@ -13,6 +13,7 @@ import HeaderWindow from './HeaderWindow'
 // import logloader from '../util/logloader'
 import { useApp, proxyMethods } from './app'
 import { ToastContainer } from 'react-toastify'
+import WindowConfig from './WindowConfig'
 // import { getActionPaths } from 'overmind/lib/utils';
 class App extends Component {
     constructor(props) {
@@ -138,9 +139,9 @@ class App extends Component {
 
         return (
             <div>
-                <ToastContainer />
-
-                {
+                {/* <ToastContainer /> */ }
+                <WindowConfig startCallHandler={ this.startCallHandler } />
+                {/* {
                     this.oState.currentWindow === "main" || this.oState.currentWindow === "chat" ?
                         <MainWindow
                             clientId={ clientId }
@@ -154,7 +155,7 @@ class App extends Component {
                                 <ControlRoomWindow />
                                 :
                                 null
-                }
+                } */}
 
 
             </div>
