@@ -7,8 +7,37 @@ import VideoStreamMerger from "../streamutils/video-stream-merger";
 const actions = {
     test({ state, actions }) {
         console.log("RUNNING RELOAD TEST")
-    }
-    ,
+    },
+    newConnnectionID({ state }) {
+        state.peerData.connectionSequence++;
+        return state.attrs.id + '-c-' + state.peerData.connectionSequence;
+    },
+    createConnection({ state, actions }, { peerID, pc }) {
+        const connectionID = actions.newConnnectionID;
+        state.peerData.connections[connectionID] = {
+            peerID,
+            pc
+        };
+    },
+    getConnection({ state }, connectionID) {
+        const connection = state.peerData.connections[connectionID];
+        if (!connection) throw new Error(`missing connection ${connectionID}`);
+        return connection;
+    },
+    getPeerID({ actions }, connectionID) {
+        return actions.getConnection(connectionID).peerID;
+    },
+    getPeerConnection({ actions }, connectionID) {
+        return json(actions.getConnection(connectionID).pc);
+    },
+    deleteConnection({ state, actions }, connectionID) {
+        if (state.peerData.connections[connectionID]) {
+            actions.relayAction({ op: 'deleteConnection', to: actions.getPeerID(connectionID), connectionID })
+        }
+        const peer = actions.getPeerConnection(connectionID)
+        peer.stop()
+        delete state.peerData.connections[connectionID]
+    },
 
     setMediaDevices({ state }, mediaDevices) {
         state.mediaDevices = mediaDevices

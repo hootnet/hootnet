@@ -27,7 +27,9 @@ function MainWindow({ startCall, clientId }) {
 
     const { state, actions } = useApp();
     const [roomID, setRoomID] = useQueryState("room", "main");
-    const [controlValue, setControlValue] = useState(state.attrs.control || '');
+    // const [room, setRoom] = useQueryState('room', 'main');
+    // const [control, setControl] = useQueryState('control', 'director');
+    const [controlValue, setControlValue] = useQueryState('role', 'member');
     const [userID, setUserID] = useState(state.attrs.name || '');
     /**
      * Start the call with or without video
