@@ -13,3 +13,7 @@ tasks:
   - init: echo 'init script' # runs during prebuild
     command: yarn "watch:server"
   - command: gp await-port 5000 && yarn "watch:client"
+
+vscode:
+  extensions:
+    - dbaeumer.vscode-eslint@2.1.8:02aHhbJ0Q4aGdjHXlTdVKg==
