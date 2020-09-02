@@ -8,6 +8,19 @@ const actions = {
   test({ state, actions }) {
     console.log("RUNNING RELOAD TEST")
   },
+  setCurrentWindow({ state }, window) {
+    state.currentWindow = window
+  },
+  doAction({ actions }, action) {
+    if (typeof action !== 'object') {
+      action = { action }
+    }
+    if (!action.action) {
+      action = { action: 'diag', payload: "need an action" }
+      return
+    }
+    actions[action.action](action.payload)
+  },
   editor: {
     set({ state }, text) {
       state.directorText = text;
@@ -615,6 +628,9 @@ const actions = {
     effects.storage.setAttrs(json(state.attrs));
     if (!error) {
       actions.setRoomStatus('registered')
+      if (state.attrs.control === 'director') {
+        actions.setCurrentWindow("director")
+      }
       actions.broadcastUserInfo()
       effects.socket.actions.register(json(state.attrs));
     }

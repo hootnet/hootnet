@@ -12,149 +12,149 @@ import { makeStyles } from "@material-ui/core/styles";
 import { H1, H3 } from './Typography';
 
 const useStyles = makeStyles((theme) => ({
-    root: {
-        "& .MuiTextField-root": {
-            margin: theme.spacing(1),
-            width: "25ch"
-        },
-        button: {
-            padding: "4px"
-        }
+  root: {
+    "& .MuiTextField-root": {
+      margin: theme.spacing(1),
+      width: "25ch"
+    },
+    button: {
+      padding: "4px"
     }
+  }
 }));
 function MainWindow({ startCall, clientId }) {
-    const classes = useStyles();
+  const classes = useStyles();
 
-    const { state, actions } = useApp();
-    const [roomID, setRoomID] = useQueryState("room", "main");
-    // const [room, setRoom] = useQueryState('room', 'main');
-    // const [control, setControl] = useQueryState('control', 'director');
-    const [controlValue, setControlValue] = useQueryState('role', 'member');
-    const [userID, setUserID] = useState(state.attrs.name || '');
-    /**
-     * Start the call with or without video
-     * @param {Boolean} video
-     */
-    const callWithVideo = (video) => {
-        const config = { audio: true, video };
-        return () => roomID && startCall(true, roomID, config);
-    };
+  const { state, actions } = useApp();
+  const [roomID, setRoomID] = useQueryState("room", "main");
+  // const [room, setRoom] = useQueryState('room', 'main');
+  // const [control, setControl] = useQueryState('control', 'director');
+  const [controlValue, setControlValue] = useQueryState('role', 'member');
+  const [userID, setUserID] = useState(state.attrs.name || '');
+  /**
+   * Start the call with or without video
+   * @param {Boolean} video
+   */
+  const callWithVideo = (video) => {
+    const config = { audio: true, video };
+    return () => roomID && startCall(true, roomID, config);
+  };
 
-    const userIdIsValid = () => {
-        return !!userID
-    }
+  const userIdIsValid = () => {
+    return !!userID
+  }
 
-    const controlValueIsValid = () => {
-        return !!controlValue
-    }
+  const controlValueIsValid = () => {
+    return !!controlValue
+  }
 
-    const roomIsValid = () => {
-        return !!roomID
-    }
+  const roomIsValid = () => {
+    return !!roomID
+  }
 
-    return (
-        <div className="bg-wite">
-            <div style={ { textAlign: 'center', width: '100%' } }>
-                <H1> HootNet </H1>
-                <H3> make music together </H3>
-                <form className={ classes.root } noValidate autoComplete="off">
-                    <div className="m-4  w-full">
+  return (
+    <div className="bg-wite">
+      <div style={ { textAlign: 'center', width: '100%' } }>
+        <H1> HootNet </H1>
+        <H3> make music together </H3>
+        <form className={ classes.root } noValidate autoComplete="off">
+          <div className="m-4  w-full">
 
-                        <div>
-                            <div className=" w-full p-10">
-                                <TextField
-                                    id="outlined-name"
-                                    label="Room"
-                                    value={ roomID }
-                                    onChange={ (event) => setRoomID(event.target.value) }
-                                    variant="outlined"
-                                />
-                                <br />
+            <div>
+              <div className=" w-full p-10">
+                <TextField
+                  id="outlined-name"
+                  label="Room"
+                  value={ roomID }
+                  onChange={ (event) => setRoomID(event.target.value) }
+                  variant="outlined"
+                />
+                <br />
 
-                                <TextField
-                                    id="outlined-name"
-                                    label="Name"
-                                    error={!userIdIsValid()}
-                                    helperText={!userIdIsValid() ? "You must enter a Name" : ""}
-                                    value={ userID }
-                                    onChange={ (event) => setUserID(event.target.value) }
-                                    variant="outlined"
-                                />
+                <TextField
+                  id="outlined-name"
+                  label="Name"
+                  error={ !userIdIsValid() }
+                  helperText={ !userIdIsValid() ? "You must enter a Name" : "" }
+                  value={ userID }
+                  onChange={ (event) => setUserID(event.target.value) }
+                  variant="outlined"
+                />
 
-                                <br />
-                                <TextField
-                                    id="outlined-name"
-                                    label="Control"
-                                    value={ controlValue }
-                                    onChange={ (event) => setControlValue(event.target.value) }
-                                    variant="outlined"
-                                />
-                                <br />
-                                <div className="inline m-2">
-                                    <Button
-                                        type="Button"
-                                        variant="contained"
-                                        disabled={!userIdIsValid() || !controlValueIsValid() || !roomIsValid()}
-                                        color="primary"
-                                        onClick={ () => actions.register({ roomID, controlValue, userID }) }
-                                    >
-                                        Register
+                <br />
+                <TextField
+                  id="outlined-name"
+                  label="Control"
+                  value={ controlValue }
+                  onChange={ (event) => setControlValue(event.target.value) }
+                  variant="outlined"
+                />
+                <br />
+                <div className="inline m-2">
+                  <Button
+                    type="Button"
+                    variant="contained"
+                    disabled={ !userIdIsValid() || !controlValueIsValid() || !roomIsValid() }
+                    color="primary"
+                    onClick={ () => actions.register({ roomID, controlValue, userID }) }
+                  >
+                    Register
                          </Button>
-                                </div>
-                                <div className="inline m-2">
-                                    <Button
-                                        type="Button"
-                                        variant="contained"
-                                        color="primary"
-                                        onClick={ actions.startCascade }
-                                    >
-                                        Cascade
+                </div>
+                <div className="inline m-2">
+                  <Button
+                    type="Button"
+                    variant="contained"
+                    color="primary"
+                    onClick={ actions.startCascade }
+                  >
+                    Cascade
               </Button>
-                                </div>
-                                <br />
-                                <br />
-                                <br />
+                </div>
+                <br />
+                <br />
+                <br />
 
-                                <div className="inline m-2">
-                                    <Button
-                                        variant="contained"
-                                        color="primary"
-                                        onClick={ actions.joinRoom }
-                                    >
-                                        Join
+                <div className="inline m-2">
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={ actions.joinRoom }
+                  >
+                    Join
               </Button>
-                                </div>
-                                <div className="inline m-2">
-                                    <Button
-                                        variant="contained"
-                                        color="primary"
-                                        onClick={ actions.leaveRoom }
-                                    >
-                                        End
+                </div>
+                <div className="inline m-2">
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={ actions.leaveRoom }
+                  >
+                    End
               </Button>
-                                </div>
-                                <div className="inline m-2">
-                                    <Button
-                                        variant="contained"
-                                        color="primary"
-                                        onClick={ actions.changeMedia }
-                                    >
-                                        Change
+                </div>
+                <div className="inline m-2">
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={ actions.changeMedia }
+                  >
+                    Change
               </Button>
-                                </div>
-                                <div className="m-2"></div>
-                                { state.changeMedia ? <MediaSelector /> : <UserList /> }
-                            </div>
+                </div>
+                <div className="m-2"></div>
+                { state.changeMedia ? <MediaSelector /> : <UserList /> }
+              </div>
 
-                        </div>
-
-                    </div>
-                </form>
             </div>
 
-        </div >
+          </div>
+        </form>
+      </div>
 
-    );
+    </div >
+
+  );
 }
 
 export default MainWindow;
