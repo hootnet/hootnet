@@ -79,7 +79,7 @@ class Blobber {
 
     try {
       this.mediaRecorder = new MediaRecorder(this.stream, options);
-      this.mediaRecorder.onstop = this.boundStop();
+      this.mediaRecorder.onstop = this.boundStop;
       this.mediaRecorder.ondataavailable = this.boundDataAvailable;
     } catch (e) {
       console.error("Exception while creating MediaRecorder:", e);

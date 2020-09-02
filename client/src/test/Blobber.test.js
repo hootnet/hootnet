@@ -1,6 +1,18 @@
-const Blobber = require('../js/streamutils/Blobber');
+import Blobber from 'streamutils/Blobber';
 
-test('Check Blobber initialization', () => {
-  const blobber = new Blobber();
-  expect(blobber.nBlobs).toBe(0);
+test('Create Blobber', () => {
+
+  Object.defineProperty(window, 'MediaRecorder', {
+      writable: true,
+      value: class {
+          constructor(stream, options) {
+            this.stream = stream;
+            this.options = options;
+          }
+          static isTypeSupported = () => jest.fn()
+          onstop = () => jest.fn()
+      }
+  });
+
+  const blob = new Blobber();
 });

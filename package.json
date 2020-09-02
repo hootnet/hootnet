@@ -10,10 +10,10 @@
         "test": "jest"
     },
     "dependencies": {
-        "@babel/core": "7.9.0",
+        "@babel/core": "7.11.5",
         "@babel/plugin-proposal-class-properties": "^7.8.3",
-        "@babel/preset-env": "7.9.0",
-        "@babel/preset-react": "7.9.4",
+        "@babel/preset-env": "7.11.5",
+        "@babel/preset-react": "7.10.4",
         "@material-ui/core": "4.11.0",
         "autoprefixer": "^9.8.5",
         "babel-loader": "8.1.0",
@@ -57,6 +57,10 @@
         "webrtc-adapter": "7.5.1"
     },
     "devDependencies": {
+        "@babel/plugin-transform-react-jsx": "7.10.4",
+        "@babel/plugin-transform-runtime": "7.11.5",
+        "babel-jest": "26.3.0",
+        "babel-plugin-transform-class-properties": "6.24.1",
         "eslint": "6.8.0",
         "eslint-config-airbnb": "18.1.0",
         "eslint-config-airbnb-base": "14.1.0",
@@ -66,6 +70,7 @@
         "favicons-webpack-plugin": "4.2.0",
         "jest": "26.4.2",
         "nodemon": "2.0.2",
+        "react-test-renderer": "16.13.1",
         "webpack-dev-server": "^3.11.0"
     },
     "engines": {
@@ -75,6 +80,11 @@
     "repository": {
         "type": "git",
         "url": "git+https://github.com/nguymin4/react-videocall.git"
+    },
+    "jest": {
+        "verbose": true,
+        "modulePaths": ["<rootDir>/client/src/js"],
+        "silent": false
     },
     "author": "Minh Son Nguyen",
     "license": "MIT"
