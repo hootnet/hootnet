@@ -5,10 +5,13 @@
     "jest": true
   },
   "rules": {
-    "comma-dangle": ["error", "never"],
+    "quotes": 0,
+    "max-len": 0,
+    "comma-dangle": 0,
     "react/jsx-filename-extension": 0,
     "jsx-a11y/control-has-associated-label": 0,
     "object-curly-newline": 0,
     "no-console": 0,
+    "no-underscore-dangle": 0
   }
 }

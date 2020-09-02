@@ -40,6 +40,18 @@ function MainWindow({ startCall, clientId }) {
         return () => roomID && startCall(true, roomID, config);
     };
 
+    const userIdIsValid = () => {
+        return !!userID
+    }
+
+    const controlValueIsValid = () => {
+        return !!controlValue
+    }
+
+    const roomIsValid = () => {
+        return !!roomID
+    }
+
     return (
         <div className="bg-wite">
             <div style={ { textAlign: 'center', width: '100%' } }>
@@ -62,6 +74,8 @@ function MainWindow({ startCall, clientId }) {
                                 <TextField
                                     id="outlined-name"
                                     label="Name"
+                                    error={!userIdIsValid()}
+                                    helperText={!userIdIsValid() ? "You must enter a Name" : ""}
                                     value={ userID }
                                     onChange={ (event) => setUserID(event.target.value) }
                                     variant="outlined"
@@ -80,6 +94,7 @@ function MainWindow({ startCall, clientId }) {
                                     <Button
                                         type="Button"
                                         variant="contained"
+                                        disabled={!userIdIsValid() || !controlValueIsValid() || !roomIsValid()}
                                         color="primary"
                                         onClick={ () => actions.register({ roomID, controlValue, userID }) }
                                     >
