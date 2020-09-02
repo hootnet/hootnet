@@ -50,15 +50,16 @@ class Blobber {
     console.log("Recorder stopped: ", event);
     console.log("Recorded Blobs: ", this.blobs);
   }
-  async handleDataAvailable(event) {
+  handleDataAvailable(event) {
     if (event.data && event.data.size > 0) {
       this.getStat("firstBlob");
       this.index++;
       if (this.index < 20) this.getStat("blob-" + this.index);
-      const blob = await event.data;
+      Promise.resolve(event.data).then(blob => {
+        this.blobs.push(blob);
+        if (this.onblob) this.onblob(blob, this.blobs);
+      })
       // console.log("BLOB", blob.size);
-      this.blobs.push(blob);
-      if (this.onblob) this.onblob(blob, this.blobs);
       // if (this.nBlobs++ < 5) console.log("BLOB", this.nBlobs);
     }
   }

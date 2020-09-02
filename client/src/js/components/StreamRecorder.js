@@ -1,10 +1,12 @@
 import React from "react";
 import Grid from "@material-ui/core/Grid";
 import Button from "@material-ui/core/Button";
-import getCameraStream from "./streamutils/getCameraStream";
-import Blobber from "./streamutils/Blobber";
-import Restreamer from "./streamutils/Restreamer";
-const StreamRecorder = ({ stream, autoStart, source, recordingComplete }) => {
+import Blobber from "../streamutils/Blobber";
+import Restreamer from "../streamutils/Restreamer";
+import { useApp } from '../app'
+
+
+const StreamRecorder = ({ stream, autoStart, source, recordingComplete, monitor }) => {
   const [inputStream, setInputStream] = React.useState(null);
   const [playDisabled, setPlayDisabled] = React.useState(true);
   const [recordDisabled, setRecordDisabled] = React.useState(false);
@@ -16,7 +18,7 @@ const StreamRecorder = ({ stream, autoStart, source, recordingComplete }) => {
   const [streamer, setStreamer] = React.useState(null);
   const [trial, setTrial] = React.useState(0);
   const [recordedBlobs, setRecordedBlobs] = React.useState([]);
-
+  const { state, actions } = useApp()
   const createChain = () => {
     const configuration = {};
     configuration.audio = inputStream.getAudioTracks().length;
@@ -24,13 +26,16 @@ const StreamRecorder = ({ stream, autoStart, source, recordingComplete }) => {
     console.log(configuration);
     const blobber = new Blobber(inputStream);
     setBlobber(blobber);
-    var video3 = document.querySelector("#video3");
-    const streamer = new Restreamer(video3, configuration);
-    blobber.onBlob((blob) => {
-      // console.log("BLOB Callback",blob)
-      streamer.addBlob(blob);
-    });
-    setStreamer(streamer);
+    // var video3 = document.querySelector("#video3");
+    if (monitor) {
+      const video3 = recordedVideo.current
+      const streamer = new Restreamer(video3, configuration);
+      blobber.onBlob((blob) => {
+        // console.log("BLOB Callback",blob)
+        streamer.addBlob(blob);
+      });
+      setStreamer(streamer);
+    }
     return blobber;
   };
   React.useEffect(() => {
@@ -42,44 +47,37 @@ const StreamRecorder = ({ stream, autoStart, source, recordingComplete }) => {
   }, [inputStream, autoStart]);
   React.useEffect(() => {
     if (source === "stream") {
-      // console.log("Recording input", stream);
       setInputStream(stream);
       setRecordDisabled(false);
-      // clickRecord();
-    } else if (source === "camera") {
-      // console.log("Getting camera");
-      const getCamera = async () => {
-        const constraints = {
-          audio: true,
-          //  {
-          //   echoCancellation: {exact: hasEchoCancellation}
-          // },video: {
-          video: { width: { ideal: 4096 }, height: { ideal: 2160 } }
-        };
-        const stream = await getCameraStream(constraints);
-        setInputStream(stream);
+    } else if (source === "local") {
+      debugger
+      setInputStream(actions.getStream('localStream'));
+      setRecordDisabled(false);
+    } else if (source === "desktop") {
+      debugger
+      if (actions.getStream('desktop')) {
+        setInputStream(actions.getStream('desktop'));
         setRecordDisabled(false);
-      };
-      getCamera();
-    } else if (source === "desktop" && !recordDisabled) {
-      const getDesktop = async () => {
-        try {
-          const constraints = { audio: true, video: true };
-          const stream = await navigator.mediaDevices.getDisplayMedia(
-            constraints
-          );
-          console.log("STream is ", stream);
-          debugger;
-          setInputStream(stream);
-          setRecordDisabled(false);
-        } catch (e) {
-          console.error("navigator.getUserMedia error:", e);
-          setError(`navigator.getUserMedia error:${e.toString()}`);
-        }
-      };
-      console.log("Going to record the desktop");
-      getDesktop();
+      } else {
+        const constraints = { audio: true, video: true };
+        navigator.mediaDevices.getDisplayMedia(
+          constraints
+        ).then(stream => {
+          try {
+            console.log("Stream is ", stream)
+            actions.addStream('dektop', stream)
+            setInputStream(stream);
+            setRecordDisabled(false);
+          } catch (e) {
+            console.error("navigator.getUserMedia error:", e);
+            setError(`navigator.getUserMedia error:${e.toString()}`);
+          }
+        })
+      }
+
     }
+
+
     //eslint-disable-next-line
   }, [source, stream, recordDisabled]);
   const clickRecord = (e) => {
@@ -132,7 +130,7 @@ const StreamRecorder = ({ stream, autoStart, source, recordingComplete }) => {
       const blobber = createChain();
       blobber.start(INTERVAL);
     } else {
-      streamer.start();
+      if (streamer) streamer.start();
       blobber.start(INTERVAL);
     }
 
@@ -143,7 +141,7 @@ const StreamRecorder = ({ stream, autoStart, source, recordingComplete }) => {
 
   function stopRecording() {
     blobber.stop();
-    streamer.stop();
+    if (streamer) streamer.stop();
     setRecordedBlobs(blobber.blobs);
     createChain();
     if (recordingComplete) recordingComplete();

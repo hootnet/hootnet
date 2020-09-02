@@ -5,6 +5,7 @@ import CascadeWindow from './CascadeWindow';
 import ControlRoomWindow from './ControlRoomWindow';
 import DirectorPage from './DirectorPage';
 import { useApp } from './app';
+import StreamRecorderDemo from './components/StreamRecorderDemo'
 
 
 const WindowConfig = ({ startCallHandler }) => {
@@ -32,11 +33,12 @@ const WindowConfig = ({ startCallHandler }) => {
   };
 
   return (
-    <>
+    <div>
       <ToastContainer />
+      { state.componentStatus.recorderDemo === "show" ? <StreamRecorderDemo /> : null }
       { currentWindow() }
 
-    </>
+    </div>
 
   );
 };

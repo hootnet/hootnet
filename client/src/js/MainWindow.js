@@ -110,6 +110,15 @@ function MainWindow({ startCall, clientId }) {
                   >
                     Cascade
               </Button>
+                  <Button
+                    type="Button"
+                    variant="contained"
+                    color="secondary"
+                    onClick={ actions.doDemo }
+                  >
+                    Demo
+              </Button>
+
                 </div>
                 <br />
                 <br />

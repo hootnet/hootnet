@@ -8,6 +8,19 @@ const actions = {
   test({ state, actions }) {
     console.log("RUNNING RELOAD TEST")
   },
+  getStream({ state, actions }, name) {
+    debugger
+    if (state.streams[name]) {
+      return json(state.streams[name])
+    } else {
+      actions.diag("stream " + name + " can't be found")
+    }
+
+  },
+  doDemo({ state }) {
+    state.componentStatus.recorderDemo = "show"
+  },
+
   setCurrentWindow({ state }, window) {
     state.currentWindow = window
   },
@@ -24,7 +37,7 @@ const actions = {
   editor: {
     set({ state }, text) {
       state.directorText = text;
-    },
+    }
   },
   newConnnectionID({ state }) {
     state.peerData.connectionSequence++;
@@ -457,7 +470,6 @@ const actions = {
         } else if (control.toLowerCase() === "viewer") {
           viewers.push(key);
         } else {
-          debugger
           console.log("CONTROL iS", control)
           actions.setMessage(
             'Control must be a number, or "control" or "member"'

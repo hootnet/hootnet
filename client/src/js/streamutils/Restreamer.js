@@ -93,7 +93,7 @@ class Restreamer {
     // this.mediaSource.getTracks().
     this.enabled = false;
   }
-  async handleSourceOpen() {
+  handleSourceOpen() {
     // console.log("Source open", this);
     this.getStat("sourceOpened");
     if (this.configuration.audio) {
@@ -110,28 +110,28 @@ class Restreamer {
     this.sourceBuffer.onupdateend = this.onupdateend.bind(this);
     this.enabled = true;
   }
-  async addToBuffer() {
-    debugger;
+  addToBuffer() {
     if (!this.enabled) return;
     const buffer = this.blobs[this.index];
-    const arrayBuffer = await buffer.arrayBuffer();
-    // const arrayBuffer =
-    try {
-      this.sourceBuffer.appendBuffer(new Uint8Array(arrayBuffer));
-      this.index++;
-      this.bufferBusy = true;
-    } catch (error) {
-      console.log("Problem adding", error.toString());
-    }
+    buffer.arrayBuffer().then(arrayBuffer => {
+
+      // const arrayBuffer =
+      try {
+        this.sourceBuffer.appendBuffer(new Uint8Array(arrayBuffer));
+        this.index++;
+        this.bufferBusy = true;
+      } catch (error) {
+        console.log("Problem adding", error.toString());
+      }
+    })
   }
-  async onupdateend() {
+  onupdateend() {
     this.bufferBusy = false;
     if (this.index < this.blobs.length) {
       this.addToBuffer();
     }
   }
-  async addBlob(blob) {
-    debugger;
+  addBlob(blob) {
     this.blobs.push(blob);
     this.getStat("firstBlob");
 

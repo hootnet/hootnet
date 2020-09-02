@@ -34,6 +34,10 @@ const state = {
   cascade: [], //array of session numbers in order
   callInfo: {},
   sessions: {},
+  componentStatus: {
+    recorderDemo: "hide",
+    recorder: "hide"
+  },
   directorText: "//Enter your code below\n\n\nEND",
   allSessions: [],
   users: {}, // keyed list of users with their data

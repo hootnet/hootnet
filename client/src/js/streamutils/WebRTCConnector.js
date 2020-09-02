@@ -63,9 +63,11 @@ class WebRTCConnector {
     if (message.constructor.name === "ArrayBuffer") {
       this.blobHandler.sendArrayBuffer(message);
     } else {
-      const buffer = await message.arrayBuffer();
-      console.log("Array Buffer length", buffer.byteLength);
-      this.blobHandler.sendArrayBuffer(buffer);
+      message.arrayBuffer().then(buffer => {
+        console.log("Array Buffer length", buffer.byteLength);
+        this.blobHandler.sendArrayBuffer(buffer);
+      }
+      )
     }
   }
   onBlob(cb) {
@@ -177,7 +179,7 @@ class Sender {
     this.hirezBlobber = new Blobber(this.localStream);
     this.hirezBlobber.onBlob(this.sendHiBlob.bind(this));
   }
-  connectToCascade() {}
+  connectToCascade() { }
   onLoBlob(cb) {
     this.lorezBlobber.onBlob(cb);
   }
