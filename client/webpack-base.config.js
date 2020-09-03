@@ -7,7 +7,8 @@ const sharedConfigs = {
   ],  
   context: __dirname,
   entry: {
-    app: './src/index.js'
+    app: './src/index.js',
+    looper: './src/looper.js'
   },
   module: {
     rules: [
