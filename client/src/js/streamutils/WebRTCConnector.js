@@ -1,88 +1,129 @@
-import VideoStreamMerger from "./video-stream-merger";
 import labeledStream from "./labeledStream";
 import Blobber from "./Blobber";
 import Restreamer from "./Restreamer";
 const BLOB_CHANNEL = "BlobChannel";
 const TEXT_CHANNEL = "TextChannel";
 class WebRTCConnector {
+  static getTextChannelName() {
+    return TEXT_CHANNEL;
+  }
+  static getBlobChannelName() {
+    return BLOB_CHANNEL;
+  }
   constructor(peer, name, mode) {
     this.name = name;
-    this.textChannel = peer.createDataChannel(TEXT_CHANNEL);
-    this.blobChannel = peer.createDataChannel(BLOB_CHANNEL);
-    this.blobChannel.binaryType = "arraybuffer";
-
-    //https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel/binaryType
     this.peer = peer;
+    this.channels = {};
+    this.peer = peer;
+    this.createDataChannel(TEXT_CHANNEL, "text");
+    this.createDataChannel(BLOB_CHANNEL, "binary");
+    this.blobChannel = this.channels[BLOB_CHANNEL].channel;
+    this.textChannel = this.channels[TEXT_CHANNEL].channel;
+    // this.sendText = this.sendText.bind(this);
+
     this.peer.addEventListener("datachannel", this.awaitDataChannel.bind(this));
   }
-  createRestreamer(sentVideo) {
-    this.restreamer = new Restreamer(sentVideo);
-    this.restreamer.start();
+  getTextChannel() {
+    return this.getChannel(WebRTCConnector.getTextChannelName());
+  }
+  getBinaryChannel() {
+    return this.getChannel(WebRTCConnector.getBlobChannelName());
+  }
+  createDataChannel(name, type) {
+    const channel = this.peer.createDataChannel(name);
+    const handler = new ChannelHandler(name, channel);
+    if (type === "binary") {
+      channel.binaryType = "arraybuffer";
+    }
+    this.channels[name] = { channel, handler };
+    // const theChannel = this.channels[event.channel.label]
+  }
+  getChannel(name) {
+    return this.channels[name].channel;
+  }
+  getHandler(name) {
+    return this.channels[name].handler;
+  }
+  setHandler(name, handler) {
+    this.channels[name].handler = handler;
+  }
+
+  getBlobber(name) {
+    return this.channels[name].blobber;
+  }
+  setBlobber(name, blobber) {
+    this.channels[name].blobber = blobber;
+  }
+  getRestreamer(name) {
+    return this.channels[name].restreamer;
+  }
+  setRestreamer(name, restreamer) {
+    this.channels[name].restreamer = restreamer;
+  }
+  receiveStream(name, configuration, sentVideo) {
+    const restreamer = new Restreamer(sentVideo, configuration);
+    restreamer.start();
+    this.setRestreamer(name);
     this.onBlob(async (blob) => {
-      console.log("Got Blob ", blob.constructor.name, blob.size);
-      this.restreamer.addBlob(blob); // console.log("Blob text", await blob.text());
+      // console.log("Got Blob ", blob.constructor.name, blob.size);
+      restreamer.addBlob(blob);
     });
   }
-  createSender(stream, name, seq, nCascade) {
-    this.sender = new Sender(stream, name, seq, nCascade);
-    let count = 0;
-    const blobSender = (blob) => {
-      console.log("BlobSender got blob", this.name);
-      this.sendBlob(blob);
-      // if (count++ === 2) this.stopSender();
-    };
-    this.sender.onHiBlob(blobSender.bind(this));
-    this.sender.start();
+  createStream(channelName, stream) {
+    const ch = this.getHandler(channelName);
+    const blobber = new Blobber(stream);
+    this.setBlobber(channelName, blobber);
+    blobber.onBlob((message) => {
+      // console.log("Blob", message.constructor.name);
+      ch.sendBinaryData(message);
+    });
+    ch.onMessage((data) => {
+      console.log("Stream Message");
+    });
   }
-  stopSender() {
-    this.sender.stop();
-    this.sender = null;
+  startStream(channelName) {
+    const blobber = this.getBlobber(channelName);
+    blobber.start(60);
   }
+  stopStream(channelName) {
+    if (this.getBlobber(channelName)) {
+      const blobber = this.getBlobber(channelName);
+      blobber.stop();
+      this.setBlobber(channelName, null);
+    }
+    if (this.getRestreamer(channelName)) {
+      const restreamer = this.getRestreamer(channelName);
+      restreamer.stop();
+      this.setRestreamer(channelName, null);
+    }
+  }
+
   awaitDataChannel(event) {
-    console.log(this.name, "received a data channel notifiction");
-    if (event.channel.label === BLOB_CHANNEL) {
-      this.blobHandler = new ChannelHandler(
-        BLOB_CHANNEL,
-        this.blobChannel,
-        event.channel
-      );
-      this.sendBlob = this.sendBlob.bind(this);
-    } else {
-      this.textHandler = new ChannelHandler(
-        TEXT_CHANNEL,
-        this.textChannel,
-        event.channel
-      );
-      this.sendText = this.sendText.bind(this);
-    }
+    console.log(
+      this.name,
+      "received a data channel notifiction",
+      event.channel.label
+    );
+    this.getHandler(event.channel.label).setDataChannel(event.channel);
   }
-  sendText(message) {
-    this.textHandler.sendText(message);
-  }
-  async sendBlob(message) {
-    if (message.constructor.name === "ArrayBuffer") {
-      this.blobHandler.sendArrayBuffer(message);
-    } else {
-      message.arrayBuffer().then(buffer => {
-        console.log("Array Buffer length", buffer.byteLength);
-        this.blobHandler.sendArrayBuffer(buffer);
-      }
-      )
-    }
-  }
+
   onBlob(cb) {
     const convertToBlob = (arrayBuffer) => {
-      console.log("Convert to blob called", arrayBuffer.byteLength);
+      // console.log("Convert to blob called", arrayBuffer.byteLength);
       const blob = new Blob([arrayBuffer]);
       // if (this.restreamer) {
       //   this.restreamer.addBlob(blob);
       // }
       cb(blob);
     };
-    this.blobHandler.onMessage(convertToBlob);
+    this.getHandler(BLOB_CHANNEL).onMessage(convertToBlob);
+  }
+  sendText(message) {
+    this.getHandler(TEXT_CHANNEL).sendText(message);
   }
   onText(cb) {
-    this.textHandler.onMessage(cb);
+    console.log("Called onText WITH CB");
+    this.getHandler(TEXT_CHANNEL).onMessage(cb);
   }
 }
 class ChannelHandler {
@@ -91,9 +132,9 @@ class ChannelHandler {
     this.name = name;
     this.channel = channel;
     this.dataChannel = dataChannel;
-    if (name === BLOB_CHANNEL) {
-      this.dataChannel.binaryType = "arraybuffer";
-    }
+  }
+  setDataChannel(dataChannel) {
+    this.dataChannel = dataChannel;
     this.dataChannel.addEventListener("open", this.awaitOpen.bind(this));
     this.dataChannel.addEventListener("close", this.awaitClose.bind(this));
   }
@@ -110,9 +151,15 @@ class ChannelHandler {
     console.log("Send Text called");
     this.channel.send(message);
   }
-  sendArrayBuffer(message) {
-    console.log("Send ArrayBuffer called");
-    this.channel.send(message);
+  sendBinaryData(message) {
+    if (message.constructor.name === "ArrayBuffer") {
+      this.channel.send(message);
+    } else {
+      message.arrayBuffer().then((buffer) => {
+        // console.log("Array Buffer length", buffer.byteLength);
+        this.channel.send(buffer);
+      });
+    }
   }
   respond(message) {
     this.dataChannel.send("response: " + message);
@@ -125,94 +172,14 @@ class ChannelHandler {
     this.cb = cb;
   }
   awaitDCMesage(event) {
-    console.log("received DC channel", this.name);
+    // console.log("received DC channel", this.name);
     if (this.cb) this.cb(event.data);
-    this.respond("ack");
+    // this.respond("ack");
   }
 }
 
-class Receiver {
-  constructor(video) {
-    if (!video) {
-      video = document.createElement("video");
-      video.autoplay = true;
-      video.muted = true;
-      video.srcObject = mediaStream;
-      video.setAttribute(
-        "style",
-        "position:fixed; left: 0px; top:0px; pointer-events: none; opacity:0;"
-      );
-      document.body.appendChild(video);
-    }
-    this.video = video;
-    this.restreamer = new Restreamer(video);
-    this.getMessage = this.getMessage.bind(this);
-  }
-  setChannel(dataChannel) {
-    this.channel = dataChannel;
-  }
-  getMessage(event) {
-    const message = event.data;
-    if (message.type === "blob") {
-      this.restreamer.addBlob(message.payload);
-    }
-  }
-  start() {
-    this.channel.addEventListener("message", this.getMessage);
-  }
-  stop() {
-    this.channel.removeEventListener("message", this.getMessage);
-  }
-}
-class Sender {
-  constructor(stream, name, iPos, nCascade) {
-    console.error("Making sender");
-    if (!stream || !name || iPos === undefined || !nCascade) {
-      console.log("Missing arguments to Hootconnector");
-    }
-    this.localStream = stream;
-    this.merger = labeledStream(stream, name, iPos, nCascade);
-    this.lorezStream = this.merger.result;
-    console.error(this.lorezStream);
-    this.lorezBlobber = new Blobber(this.lorezStream);
-    this.lorezBlobber.onBlob(this.sendLoBlob.bind(this));
-    this.hirezBlobber = new Blobber(this.localStream);
-    this.hirezBlobber.onBlob(this.sendHiBlob.bind(this));
-  }
-  connectToCascade() { }
-  onLoBlob(cb) {
-    this.lorezBlobber.onBlob(cb);
-  }
-  onHiBlob(cb) {
-    this.hirezBlobber.onBlob(cb);
-  }
-  sendLoBlob(blob) {
-    // console.log("loBlob", blob.size);
-  }
-  sendHiBlob(blob) {
-    // console.log("hiBlob", blob.size);
-  }
-  start() {
-    console.error("starting");
-    this.lorezBlobber.start(100);
-    this.hirezBlobber.start(100);
-  }
-  stop() {
-    this.lorezBlobber.stop();
-    this.hirezBlobber.stop();
-  }
-  addStream(src) {
-    this.merger.addStream(src, {
-      index: -1,
-      x: 0, // position of the topleft corner
-      y: 0,
-      width: this.merger.width,
-      height: this.merger.height
-    });
-  }
-}
 export default WebRTCConnector;
-export { Sender, Receiver };
+// export { Sender, Receiver };
 
 /*
 const blb    = new Blob(["Lorem ipsum sit"], {type: "text/plain"});

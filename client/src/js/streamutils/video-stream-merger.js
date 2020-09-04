@@ -1,8 +1,8 @@
 /* globals window */
 const mergers = []
 module.exports = VideoStreamMerger
-console.log("merger is now loaded")
-function VideoStreamMerger (opts) {
+// console.log("merger is now loaded")
+function VideoStreamMerger(opts) {
   if (!(this instanceof VideoStreamMerger)) return new VideoStreamMerger(opts)
   opts = opts || {}
 
@@ -361,11 +361,11 @@ VideoStreamMerger.prototype.destroy = function () {
   })
   this.result = null
 }
-if(module.hot) {
-    module.hot.dispose(data=>{
-        mergers.forEach(merger=> {
-            console.log("got rid of merger")
-            if(merger.result) merger.destroy()
-        })
+if (module.hot) {
+  module.hot.dispose(data => {
+    mergers.forEach(merger => {
+      console.log("got rid of merger")
+      if (merger.result) merger.destroy()
     })
+  })
 }
