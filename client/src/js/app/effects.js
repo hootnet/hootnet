@@ -70,7 +70,7 @@ const effects = {
         toast(data.message)
       },
       identify() {
-        console.log('IN THE IDENTIFY')
+        // console.log('IN THE IDENTIFY')
         const attrs = effects.storage.getAttrs()
         if (attrs) socket.emit('identified', attrs)
       },

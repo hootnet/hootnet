@@ -46,8 +46,8 @@ const initialize = () => {
       ? 'penguin.linux.test:3031'
       : 'localhost:3031'
   });
-  console.log(app.state);
-  setProxyActions(app.actions);
+  // console.log(app.state);
+  // setProxyActions(app.actions);
   useApp = createHook();
   console.log('Set attrs');
   // app.actions.setAttrs(app.effects.getAttrs())

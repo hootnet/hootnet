@@ -2,11 +2,11 @@ import { json } from "overmind";
 import { toast } from "react-toastify";
 import labeledStream from "../streamutils/labeledStream";
 import PeerConnection from "../PeerConnection";
-import VideoStreamMerger from "../streamutils/video-stream-merger";
+// import VideoStreamMerger from "../streamutils/video-stream-merger";
 
 const actions = {
-  test({ state, actions }) {
-    console.log("RUNNING RELOAD TEST")
+  onReload({ state, actions }) {
+    console.log("RUNNING RELOAD TEST", actions === state)
   },
   getStream({ state, actions }, name) {
     debugger
@@ -89,11 +89,11 @@ const actions = {
   setAppState({ state }, { prop, value }) {
     state.AppState[prop] = value;
   },
-  relayAction({ state, effects }, { to, op, data }) {
+  relayAction({ effects }, { to, op, data }) {
     effects.socket.actions.relayEffect(to, op, data);
   },
 
-  startCascade({ state, actions, effects }) {
+  startCascade({ state, actions }) {
     console.clear();
     if (state.members.length < 2) {
       actions.setMessage("Can't start a cascade with only you in the room.");
@@ -121,7 +121,7 @@ const actions = {
       });
     });
   },
-  initiatesTo({ state, actions }, member) {
+  initiatesTo({ state }, member) {
     if (state.attrs.id < member) {
       // actions.diag(state.attrs.id + " initiates to " + member)
       return true
@@ -146,7 +146,7 @@ const actions = {
       setTimeout(connectRoom, 1000)
     }
     let allPresent = true
-    state.members.map((member, sequence) => {
+    state.members.map((member) => {
       if (!state.users[member]) {
         allPresent = false
         actions.relayAction({ to: member, op: "getInfo" });
@@ -158,7 +158,7 @@ const actions = {
 
     }, 1000);
     // console.log("connecting to ", state.members)
-    state.members.map((member, sequence) => {
+    state.members.map((member) => {
       if (!state.users[member]) return
       if (state.users[member].roomStatus !== 'joined') return
       // if (state.users[member].initStatus) return
@@ -176,7 +176,7 @@ const actions = {
       }
     });
   },
-  endStreams({ state, actions, effects }, data) {
+  endStreams({ state, actions }) {
     console.log("ENDING CHATTERS    ")
     // actions.endCall({ from: state.attrs.id })
     state.members.forEach(id => {
@@ -213,7 +213,7 @@ const actions = {
     });
   },
   startControllers({ state, actions }) {
-    state.sessions.controllers.map((member, sequence) => {
+    state.sessions.controllers.map((member) => {
       actions.relayAction({
         to: state.nextMember,
         op: "startcall",
@@ -257,20 +257,20 @@ const actions = {
       status: 'connecting'
     };
     pc
-      .on('localStream', (src) => {
+      .on('localStream', () => {
       })
       .on('peerTrackEvent', (e) => {
-        const src = e.streams[0]
+        // const src = e.streams[0]
         // actions.setRoomStatus('connected')
         actions.peerTrackEvent({ friendID, event: e })
       })
       .startPeer(isCaller, config, state);
-    pc.pc.oniceconnectionstatechange = (event) => {
+    pc.pc.oniceconnectionstatechange = () => {
       const message = `Ice connection state change for ${friendID} ${pc.pc.iceConnectionState}`
       actions.diag(message)
 
     }
-    pc.pc.onconnectionstatechange = (event) => {
+    pc.pc.onconnectionstatechange = () => {
       const message = `Connection state change for ${friendID} ${pc.pc.connectionState}`
       actions.diag(message)
       // actions.setConnectionStatus({ id: friendID, status: pc.pc.connectionState })
@@ -300,7 +300,7 @@ const actions = {
   //   const id = state.attrs.id;
   //   actions.createCasdadeStream();
   // },
-  createCascadeStream({ state, actions }) {
+  createCascadeStream({ state }) {
     if (!state.streams.cascadeStream) {
       const merger = labeledStream(
         json(state.streams.localStream),
@@ -387,13 +387,13 @@ const actions = {
       delete state.streams.cascadeMerger;
     }
   },
-  broadcastToRoom({ state, effects, actions }, { message, data }) {
+  broadcastToRoom({ state, effects }, { message, data }) {
     state.members.forEach(id => {
       effects.socket.actions.relay(id, message, data);
     });
   },
 
-  endCascade({ state, actions, effects }, data) {
+  endCascade({ state, actions }) {
     actions.setMessage(`Ending cascade for room '${state.attrs.room}'.`);
     actions.endCall({ from: state.attrs.id })
     state.members.forEach(id => {
@@ -489,7 +489,7 @@ const actions = {
     };
     state.index = state.sessions.cascaders.findIndex(e => e === state.attrs.id);
   },
-  sendUserInfo({ state, actions, effects }, request) {
+  sendUserInfo({ state, actions }, request) {
     const data = Object.assign(json(state.attrs), request);
     actions.relayAction({ to: request.from, op: "info", data });
   },
@@ -535,7 +535,7 @@ const actions = {
     });
     setTimeout(actions.clearMessage, state._message.delay);
   },
-  clearMessage({ state, actions }) {
+  clearMessage({ state }) {
     state._message.text = "";
   },
 
@@ -548,8 +548,10 @@ const actions = {
   addStream({ state }, { name, stream }) {
     state.streams[name] = stream;
   },
-  addControllerPeer({ state }, src) { },
-  addPeerToCascade({ state, actions }, src) {
+  addControllerPeer({ state }, src) {
+    console.log("Just to avoid an error", state, src)
+  },//eslint-disable-line
+  addPeerToCascade({ state }, src) {
     const id = state.attrs.id;
     // const control = state.users[id].control;
 
@@ -566,7 +568,7 @@ const actions = {
       });
     }
   },
-  setupStreams({ state, actions }, opts) {
+  setupStreams({ state, actions }) {
     // const id = state.attrs.id;
     if (!state.streams.cascadeStream) {
       const merger = labeledStream(
@@ -580,7 +582,7 @@ const actions = {
       actions.addStream({ name: "cascadeStream", stream: merger.result });
     }
   },
-  logEvent({ state }, { evType, message, zargs, cb }) {
+  logEvent({ state }, { evType, message, zargs }) {
     const lastEvent = { evType, message, zargs };
     if (message === "ping" || message === "pong") state.lastEvent = lastEvent;
     // state.events.push(lastEvent)
