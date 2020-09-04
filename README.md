@@ -1,6 +1,6 @@
 ## HootNet
 
-Collaborate with others online to make music in real-time
+Collaborate with others online to make music in real-time.
 
 ### Development
 
