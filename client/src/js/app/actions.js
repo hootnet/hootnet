@@ -8,8 +8,10 @@ const actions = {
   onReload({ state, actions }) {
     console.log("RUNNING RELOAD TEST", actions === state)
   },
+  setTestWindow({ state }, window) {
+    state.testWindow = window
+  },
   getStream({ state, actions }, name) {
-    debugger
     if (state.streams[name]) {
       return json(state.streams[name])
     } else {

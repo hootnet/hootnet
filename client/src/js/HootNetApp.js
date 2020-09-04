@@ -84,15 +84,6 @@ class App extends Component {
     // const pc = new PeerConnection(friendID, opts, this.oState, this.actions)
     const pc = this.actions.startCall({ isCaller, friendID, config, data });
     this.pcs[friendID] = pc
-    // this.setState({nPCs: Object.keys(this.pcs).length})
-    // pc
-    //     .on('localStream', (src) => {
-    //     })
-    //     .on('peerTrackEvent', (e) => {
-    //         const src = e.streams[0]
-    //         this.actions.peerTrackEvent({ friendID, event: e })
-    //     })
-    //     .startPeer(isCaller, config, this.oState);
   }
 
   rejectCall() {
@@ -141,23 +132,6 @@ class App extends Component {
       <div>
         {/* <ToastContainer /> */ }
         <WindowConfig startCallHandler={ this.startCallHandler } />
-        {/* {
-                    this.oState.currentWindow === "main" || this.oState.currentWindow === "chat" ?
-                        <MainWindow
-                            clientId={ clientId }
-                            startCall={ this.startCallHandler }
-                        />
-                        :
-
-                        this.oState.currentWindow === "cascade" ?
-                            <CascadeWindow />
-                            : this.oState.currentWindow === "control" ?
-                                <ControlRoomWindow />
-                                :
-                                null
-                } */}
-
-
       </div>
     );
   }

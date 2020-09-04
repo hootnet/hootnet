@@ -1,5 +1,6 @@
 const state = {
   title: 'This title',
+  testWindow: '',
   changeMedia: false,
   streamNumber: 0,
   mediaDevices: [],

@@ -10,8 +10,11 @@ import StreamRecorderDemo from './components/StreamRecorderDemo'
 
 const WindowConfig = ({ startCallHandler }) => {
   const { state, actions } = useApp();
+
   const currentWindow = (startCallHandler) => {
-    switch (state.currentWindow) {
+    let testWindow = state.currentWindow
+    if (state.testWindow) testWindow = state.testWindow
+    switch (testWindow) {
       // switch ('main') {
       case 'main':
       case 'chat':
