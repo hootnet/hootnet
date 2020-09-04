@@ -20,9 +20,16 @@ const configs = addBaseConfig({
     plugins: [
         new HotModuleReplacementPlugin(),
         new HtmlWebpackPlugin({
-            title: "React VideoCall - Minh Son Nguyen",
+            title: "HootNet",
             filename: "index.html",
-            template: "src/html/index.html"
+            template: "src/html/index.html",
+            chunks: ["app"]
+        }),
+        new HtmlWebpackPlugin({
+            title: "Loop Test",
+            filename: "loopTest.html",
+            template: "src/html/loopTest.html",
+            chunks: ["looper"]
         })
     ],
     devServer: {
