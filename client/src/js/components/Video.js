@@ -9,16 +9,23 @@ let Video = (props) => {
   if (!stream && !streamName) streamName = "localStream"
 
 
-
   React.useEffect(() => {
-    console.log("Assign", { streamName, ref, stream })
+    if (ref && ref.current) {
+      const video = ref.current
+      const events = props.onEvents
+      if (events) {
+        for (let name in events) {
+          const cb = events[name]
+          video.addEventListener(name, cb)
+        }
 
-    if (ref && ref.current && (stream || state.streams[streamName])) {
-      console.log("Assign", ref.currrent, stream, streamName)
-      if (streamName) {
-        ref.current.srcObject = actions.getStream(streamName)
-      } else {
-        ref.current.srcObject = stream
+      }
+      if ((stream || state.streams[streamName])) {
+        if (streamName) {
+          video.srcObject = actions.getStream(streamName)
+        } else {
+          video.srcObject = stream
+        }
       }
     }
   }, [ref, stream, state.streams[streamName]]);
@@ -48,13 +55,9 @@ waiting`.split("\n")
 
   return (
     <React.Fragment>
-      <h1 className="bg-black" id="VIDEO">
-        { console.log("render video") }
-        this is the video component
-        </h1>
       <video
         ref={ ref }
-
+        autoPlay
         { ...props }
       />
     </React.Fragment>

@@ -35,7 +35,13 @@ const WindowConfig = ({ startCallHandler }) => {
       case 'director':
         return <DirectorPage />;
       case 'video':
-        return <Video />
+        return <Video controls
+          playsInline
+          onEvents={ {
+            play: () => console.log("playing more"),
+            pause: () => console.log("paused")
+          } }
+        />
       case 'testpage':
         return <TestPage />
       default:
