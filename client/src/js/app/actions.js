@@ -6,6 +6,7 @@ import PeerConnection from "../PeerConnection";
 
 const actions = {
   onReload({ state, actions }) {
+    actions.setTestWindow('video')
     console.log("RUNNING RELOAD TEST", actions === state)
   },
   setTestWindow({ state }, window) {

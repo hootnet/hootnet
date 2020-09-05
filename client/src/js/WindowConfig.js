@@ -6,6 +6,10 @@ import ControlRoomWindow from './ControlRoomWindow';
 import DirectorPage from './DirectorPage';
 import { useApp } from './app';
 import StreamRecorderDemo from './components/StreamRecorderDemo'
+import TestPage from "./components/TestPage";
+import Video from "./components/Video";
+
+
 
 
 const WindowConfig = ({ startCallHandler }) => {
@@ -30,6 +34,10 @@ const WindowConfig = ({ startCallHandler }) => {
         return <ControlRoomWindow />;
       case 'director':
         return <DirectorPage />;
+      case 'video':
+        return <Video />
+      case 'testpage':
+        return <TestPage />
       default:
         return null;
     }
