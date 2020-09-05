@@ -12,7 +12,7 @@ let Video = (props) => {
   React.useEffect(() => {
     if (ref && ref.current) {
       const video = ref.current
-      const events = props.onEvents
+      const events = props.watch
       if (events) {
         for (let name in events) {
           const cb = events[name]

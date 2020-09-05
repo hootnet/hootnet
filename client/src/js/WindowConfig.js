@@ -37,7 +37,7 @@ const WindowConfig = ({ startCallHandler }) => {
       case 'video':
         return <Video controls
           playsInline
-          onEvents={ {
+          watch={ {
             play: () => console.log("playing more"),
             pause: () => console.log("paused")
           } }
