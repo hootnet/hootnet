@@ -6,23 +6,22 @@ let Video = (props) => {
   const { state, actions } = useApp();
   const ref = React.useRef(null);
   let { stream, streamName } = props
+  const [initialized, setInitialized] = React.useState(false)
   if (!stream && !streamName) streamName = "localStream"
 
 
   React.useEffect(() => {
     if (ref && ref.current) {
       const video = ref.current
-<<<<<<< HEAD
-      const events = props.watch
-=======
-      const events = props.watchEvents
->>>>>>> ab7cffd5dd86e57c32271920e179fb8df9df5883
-      if (events) {
-        for (let name in events) {
-          const cb = events[name]
-          video.addEventListener(name, cb)
+      if (!initialized) {
+        setInitialized(true)
+        const events = props.watch
+        if (events) {
+          for (let name in events) {
+            const cb = events[name]
+            video.addEventListener(name, cb)
+          }
         }
-
       }
       if ((stream || state.streams[streamName])) {
         if (streamName) {
@@ -32,7 +31,7 @@ let Video = (props) => {
         }
       }
     }
-  }, [ref, stream, state.streams[streamName]]);
+  }, [ref, initialized, stream, state.streams[streamName]]);
   const callBackNames = `
 audioprocess
 canplay
