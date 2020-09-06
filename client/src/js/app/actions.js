@@ -6,8 +6,15 @@ import PeerConnection from "../PeerConnection";
 
 const actions = {
   onReload({ state, actions }) {
-    actions.setTestWindow('video')
-    console.log("RUNNING RELOAD TEST", actions === state)
+    // actions.setTestWindow('video')
+    console.log("Session", actions.sessionOfName(state.attrs.id))
+    console.log("Session", actions.sessionOfName(state.attrs.name))
+
+    try {
+      console.log("Session", actions.sessionOfName("session-16"))
+    } catch (e) {
+      console.log("Caught errror ", e)
+    }
   },
   setTestWindow({ state }, window) {
     state.testWindow = window
@@ -19,6 +26,14 @@ const actions = {
       actions.diag("stream " + name + " can't be found")
     }
 
+  },
+  sessionOfName({ state }, name) {
+    // console.log("TRANSLATE", name)
+    name = name.toLowerCase()
+    if (state.users[name]) return name //return if session number passed in
+    const foundSession = Object.keys(state.users).find(session => state.users[session].name.toLowerCase() === name)
+    if (foundSession) return foundSession
+    throw new Error("sessionsOfName not defined: " + name)
   },
   doDemo({ state }) {
     state.componentStatus.recorderDemo = "show"
