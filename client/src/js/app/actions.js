@@ -6,15 +6,7 @@ import PeerConnection from "../PeerConnection";
 
 const actions = {
   onReload({ state, actions }) {
-    // actions.setTestWindow('video')
-    console.log("Session", actions.sessionOfName(state.attrs.id))
-    console.log("Session", actions.sessionOfName(state.attrs.name))
-
-    try {
-      console.log("Session", actions.sessionOfName("session-16"))
-    } catch (e) {
-      console.log("Caught errror ", e)
-    }
+    actions.tests._sessionOfName()
   },
   setTestWindow({ state }, window) {
     state.testWindow = window
