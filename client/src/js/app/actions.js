@@ -6,6 +6,7 @@ import PeerConnection from "../PeerConnection";
 
 const actions = {
   onReload({ state, actions }) {
+    actions.tests.clearResults()
     actions.tests._sessionOfName()
   },
   setTestWindow({ state }, window) {
