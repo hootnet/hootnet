@@ -33,7 +33,7 @@ const state = {
   nextMember: null,
   members: [], //array of member session numbers
   cascade: [], //array of session numbers in order
-  callInfo: {},
+  // callInfo: {},
   sessions: {},
   componentStatus: {
     recorderDemo: "hide",

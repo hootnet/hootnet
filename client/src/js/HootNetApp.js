@@ -1,18 +1,11 @@
 import React, { useEffect, Component } from 'react';
 import _ from 'lodash';
 import socket from './socket';
-import PeerConnection from './PeerConnection';
-import MainWindow from './MainWindow';
-import CascadeWindow from './CascadeWindow';
-import ControlRoomWindow from './ControlRoomWindow';
 
 import MediaDevice from './MediaDevice';
 import EmptyStream from './streamutils/EmptyStream';
-import { json } from 'overmind'
 import HeaderWindow from './HeaderWindow'
-// import logloader from '../util/logloader'
 import { useApp, proxyMethods } from './app'
-import { ToastContainer } from 'react-toastify'
 import WindowConfig from './WindowConfig'
 // import { getActionPaths } from 'overmind/lib/utils';
 class App extends Component {
@@ -81,7 +74,6 @@ class App extends Component {
 
   startCall(isCaller, friendID, config, data) {
     this.config = config;
-    // const pc = new PeerConnection(friendID, opts, this.oState, this.actions)
     const pc = this.actions.startCall({ isCaller, friendID, config, data });
     this.pcs[friendID] = pc
   }
@@ -93,35 +85,7 @@ class App extends Component {
 
   endCall(isStarter, from) {
     this.actions.endCall({ isStarter, from })
-    let keys
-    if (from) {
-      keys = Object.keys(this.pcs).filter(key => (key === from) || key.startsWith('X' + from))
-      // keys = [from]
-    } else {
-      keys = Object.keys(this.pcs)
-    }
-    keys.forEach(
-      (key) => {
-        const pc = this.pcs[key]
-        if (_.isFunction(pc.stop)) {
-          pc.stop(isStarter, key);
-        }
-        delete this.pcs[key]
-      }
-    )
-    if (_.isEmpty(this.pcs)) {
-      this.config = null;
-      this.pcs = {}
-      this.setState({
-        callWindow: '',
-        localSrc: null,
-        // nPCs: 0
-      })
 
-    } else {
-      // this.setState({nPCs: Object.keys(this.pcs).length})
-
-    };
   }
 
   render() {

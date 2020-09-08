@@ -8,19 +8,15 @@ const VideoTile = ({ id }) => {
   const { state, actions, effects } = useApp()
   const [stream, setStream] = React.useState({})
   const ref = React.useRef(null)
-
   React.useEffect(() => {
-    // actions.diag('VideoTile effect ' + state.peerEvents)
     if (ref && ref.current) {
       if (state.attrs.id === id) {
-        // console.log("Ref for ", id, "set to local stream")
-        window.xlocal = ref.current.srcObject = json(state.streams.localStream)
+        ref.current.srcObject = json(state.streams.localStream)
       } else {
-        // console.log("Ref for", id, "set to remote stream ", state.users[id].remoteStream.streamNumber)
-        ref.current.srcObject = json(state.users[id].remoteStream)
+        ref.current.srcObject = actions.getRemoteStream(id)
       }
     }
-  }, [state.peerEvents, ref, ref.current])
+  }, [state.users[id].remoteStream, ref, ref.current, state.peerEvents])
   const displayLegend = () => {
     const user = json(state.users[id])
     const legend = ` ${user.name} ${user.roomStatus} (${user.control} ${user.connectionState})`
@@ -30,10 +26,8 @@ const VideoTile = ({ id }) => {
   const displayTile = () => {
     // console.log("Evaluatiing display Tile", { room: state.users[id].roomStatus, connection: state.users[id].connectionStatus })
     if (state.attrs.id !== id) {
-      if (state.users[id] && state.users[id].roomStatus !== "joined") {
-        return (<H3>status + { state.users[id].roomStatus }</H3>)
-      } else if (state.users[id] && state.users[id].connectionStatus !== "connected") {
-        return (<H3>Connecting</H3>)
+      if ((state.attrs.roomStatus !== "joined") || (state.users[id] && state.users[id].roomStatus !== "joined")) {
+        return (<H3 >{ state.users[id].name } { state.users[id].roomStatus }</H3>)
       }
     }
     return (
@@ -42,11 +36,11 @@ const VideoTile = ({ id }) => {
     )
   }
   return <React.Fragment>
-    <div className=" text-black bg-gray-800  ">
+    <div style={ { opacity: state.users[id].opacity } } className=" text-black bg-gray-800 h-32 ">
       { displayTile(state.users[id].roomStatus) }
       {/* { console.log('rendering the tile') } */ }
     </div>
-    <div className="p-1 h-8 text-black bg-yellow-100" >
+    <div className="p-2 h-8 text-black bg-yellow-100" >
       { displayLegend() }
     </div>
   </React.Fragment >

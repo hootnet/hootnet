@@ -5,7 +5,11 @@ import PeerConnection from "../PeerConnection";
 // import VideoStreamMerger from "../streamutils/video-stream-merger";
 
 const actions = {
+  incrPeer({ state }) {
+    state.peerEvents++
+  },
   onReload({ state, actions }) {
+    actions.setTestWindow('')
     actions.tests.clearResults()
     actions.tests._sessionOfName()
   },
@@ -19,6 +23,27 @@ const actions = {
       actions.diag("stream " + name + " can't be found")
     }
 
+  },
+  getRemoteStream({ state, actions }, id) {
+    if (state.users[id] && state.users[id].remoteStream) {
+      return json(state.users[id].remoteStream)
+    } else {
+      return null
+    }
+  },
+  setRemoteStream({ state }, { member, stream }) {
+    state.users[member].remoteStream = stream
+  },
+  clearRemoteStream({ state, actions }, id) {
+    const stream = actions.getRemoteStream(id)
+    stream.getTracks().forEach(track => {
+      track.stop()
+      stream.removeTrack(track)
+    })
+    const pc = json(state.users[id].peerConnection)
+    if (pc) pc.stop()
+    state.users[id].peerConnection = null
+    state.users[id].remoteStream = null
   },
   sessionOfName({ state }, name) {
     // console.log("TRANSLATE", name)
@@ -50,39 +75,40 @@ const actions = {
       state.directorText = text;
     }
   },
-  newConnnectionID({ state }) {
-    state.peerData.connectionSequence++;
-    return state.attrs.id + '-c-' + state.peerData.connectionSequence;
-  },
-  createConnection({ state, actions }, { peerID, pc }) {
-    const connectionID = actions.newConnnectionID;
-    state.peerData.connections[connectionID] = {
-      peerID,
-      pc
-    };
-  },
-  getConnection({ state }, connectionID) {
-    const connection = state.peerData.connections[connectionID];
-    if (!connection) throw new Error(`missing connection ${connectionID}`);
-    return connection;
-  },
-  getPeerID({ actions }, connectionID) {
-    return actions.getConnection(connectionID).peerID;
-  },
-  getPeerConnection({ actions }, connectionID) {
-    return json(actions.getConnection(connectionID).pc);
-  },
-  deleteConnection({ state, actions }, connectionID) {
-    if (state.peerData.connections[connectionID]) {
-      actions.relayAction({ op: 'deleteConnection', to: actions.getPeerID(connectionID), connectionID })
-    }
-    const peer = actions.getPeerConnection(connectionID)
-    peer.stop()
-    delete state.peerData.connections[connectionID]
-  },
+  // newConnnectionID({ state }) {
+  //   state.peerData.connectionSequence++;
+  //   return state.attrs.id + '-c-' + state.peerData.connectionSequence;
+  // },
+  // createConnection({ state, actions }, { peerID, pc }) {
+  //   const connectionID = actions.newConnnectionID;
+  //   state.peerData.connections[connectionID] = {
+  //     peerID,
+  //     pc
+  //   };
+  // },
+  // getConnection({ state }, connectionID) {
+  //   const connection = state.peerData.connections[connectionID];
+  //   if (!connection) throw new Error(`missing connection ${connectionID}`);
+  //   return connection;
+  // },
+  // getPeerID({ actions }, connectionID) {
+  //   return actions.getConnection(connectionID).peerID;
+  // },
+  // getPeerConnection({ actions }, connectionID) {
+  //   return json(actions.getConnection(connectionID).pc);
+  // },
+  // deleteConnection({ state, actions }, connectionID) {
+  //   if (state.peerData.connections[connectionID]) {
+  //     actions.relayAction({ op: 'deleteConnection', to: actions.getPeerID(connectionID), connectionID })
+  //   }
+  //   const peer = actions.getPeerConnection(connectionID)
+  //   peer.stop()
+  //   delete state.peerData.connections[connectionID]
+  // },
 
-  setMediaDevices({ state }, mediaDevices) {
+  setMediaDevices({ state, actions }, mediaDevices) {
     state.mediaDevices = mediaDevices
+    actions.joinRoom()
   },
   getMediaDevices({ state }) {
     navigator.mediaDevices.enumerateDevices().then((devices) => {
@@ -164,21 +190,27 @@ const actions = {
       }
     })
     //If not all present, try again in a minute
-    if (!allPresent) setTimeout(() => {
-      actions.reconnect()
+    if (!allPresent) {
+      setTimeout(() => {
+        actions.reconnect()
 
-    }, 1000);
+      }, 1000);
+      return
+    }
     // console.log("connecting to ", state.members)
     state.members.map((member) => {
       if (!state.users[member]) return
       if (state.users[member].roomStatus !== 'joined') return
-      // if (state.users[member].initStatus) return
-      const newStream = new MediaStream()
-      newStream.streamNumber = state.streamNumber++
-      state.users[member].remoteStream = newStream
+      // const newStream = new MediaStream()
+      // newStream.streamNumber = state.streamNumber++
+      // actions.setRemoteStream({ member, stream: newStream })
+
 
       if (actions.initiatesTo(member)) {
-        state.users[member].initStatus = true
+        if (actions.getRemoteStream(member)) return
+        if (state.users[member].recentlyConnected) return
+        state.users[member].recentlyConnected = true
+        setTimeout(() => state.users[member].recentlyConnected = false, 2000)
         actions.relayAction({
           to: member,
           op: "startcall",
@@ -188,8 +220,9 @@ const actions = {
     });
   },
   endStreams({ state, actions }) {
-    console.log("ENDING CHATTERS    ")
+    console.log("Ending Streams    ")
     // actions.endCall({ from: state.attrs.id })
+    state.peerEvents++
     state.members.forEach(id => {
       actions.relayAction({
         to: id,
@@ -201,14 +234,6 @@ const actions = {
         op: "end",
         data: { from: id }
       });
-      // if (state.users[id] && state.users[id].remoteStream) {
-      //     const stream = json(state.users[id].remoteStream)
-      //     state.users[id].remoteStream = new MediaStream()
-      //     stream.getTracks().forEach(track => {
-      //         track.stop()
-      //         stream.removeTrack(track)
-      //     })
-      // }
     }
     )
 
@@ -260,13 +285,13 @@ const actions = {
     // }
     const pc = new PeerConnection(friendID, state);
     state.users[friendID].peerConnection = pc
-    state.callInfo[friendID] = {
-      pc,
-      config,
-      isCaller,
-      data,
-      status: 'connecting'
-    };
+    // state.callInfo[friendID] = {
+    //   pc,
+    //   config,
+    //   isCaller,
+    //   data,
+    //   status: 'connecting'
+    // };
     pc
       .on('localStream', () => {
       })
@@ -326,39 +351,35 @@ const actions = {
   endCall({ state, actions }, { isStarter, from }) {
     // actions.clearCascade();
     // actions.setRoomStatus('disconnected')
+    // if (from === state.attrs.id) return
     actions.setConnectionStatus({ id: from, status: 'disconnected' })
-    state.users[from].initStatus = false
-    if (state.users[from] && state.users[from].remoteStream) {
-      const stream = json(state.users[from].remoteStream)
-      state.users[from].remoteStream = null
-      stream.getTracks().forEach(track => {
-        track.stop()
-        stream.removeTrack(track)
-      })
+    if (actions.getRemoteStream(from)) {
+      actions.clearRemoteStream(from)
     }
 
 
-    if (state.callInfo[from] && !state.callInfo[from].stopped) {
-      const callInfo = json(state.callInfo[from]);
-      callInfo.pc.stop(isStarter.from);
-      state.callInfo[from] = {
-        pc: null,
-        stopped: true,
-        status: 'disconnected'
-      };
-    }
+    // if (state.callInfo[from] && !state.callInfo[from].stopped) {
+    //   const callInfo = json(state.callInfo[from]);
+    //   callInfo.pc.stop(isStarter.from);
+    //   state.callInfo[from] = {
+    //     pc: null,
+    //     stopped: true,
+    //     status: 'disconnected'
+    //   };
+    // }
 
   },
   peerTrackEvent({ state, actions }, { friendID, event: e }) {
     state.peerEvents = state.peerEvents + 1
     const src = e.streams[0];
-    const stream = json(state.users[friendID].remoteStream)
+    actions.setRemoteStream({ member: friendID, stream: src })
+    // const stream = actions.getRemoteStream(friendID)
     actions.setConnectionStatus({ id: friendID, status: 'connected' })
-    const tracks = src.getTracks()
-    tracks.forEach(track => {
-      // console.log("adding a track", track.kind)
-      stream.addTrack(track, src)
-    })
+    // const tracks = src.getTracks()
+    // tracks.forEach(track => {
+    //   console.log("adding a track", track.kind)
+    //   src.addTrack(track, src)
+    // })
 
   },
   // relayAction({ state, effects }, { to, op, data }) {
@@ -417,43 +438,35 @@ const actions = {
   },
 
   deleteUserEntry({ state }, id) {
-    const user = state.users[id]
-    if (user.remoteStream) {
-      const stream = json(user.remoteStream)
-      stream.getTracks().forEach(track => {
-        track.stop()
-        stream.removeTrack(track)
-      })
+    actions.clearFaderTimeout(id)
+    if (actions.getRemoteStream(id)) {
+      actions.deleteRemoteStream(id)
     }
     delete state.users[id]
   },
   fadeUserEntry({ state }, id) {
     const user = state.users[id]
-    user.opacity = user.opacity
+    user.opacity = user.opacity - 0.01
+    if (user.opacity <= 0) {
+      actions.deleteUserEntry(id)
+
+    }
 
   },
   setMembers({ state, actions }, data) {
-    const inArray = (val, array) => {
-      return array.filter(e => e === val);
-    };
-    const droppedMembers = []
-    data.members.forEach(member => {
-      if (!inArray(member, state.members) || !state.users[member]) {
-        // of user is not in the array then send a
-        actions.relayAction({ to: member, op: "getInfo" });
-      } else {
-        droppedMembers.push(member)
-      }
+    const newMembers = data.members.filter(member => !state.members.includes(member))
+    const droppedMembers = state.members.filter(member => !data.members.includes(member))
+    console.log("old", json(state.members), "new ", newMembers, "dropped", droppedMembers)
+    state.members = data.members
+    newMembers.forEach(member => {
+      actions.relayAction({ to: member, op: "getInfo" });
     });
-    state.members = data.members;
     droppedMembers.forEach(member => {
       const user = json(state.users[member])
-      if (!user) return
-      if (user.timeOut) return
-      user.timeOut = setTimeout(() => {
+      if (user.faderTimeOut) return
+      state.users[member].faderTimeOut = setTimeout(() => {
         actions.fadeUserEntry(member)
-      }, 2000)
-
+      }, 100)
     })
     actions.computeCategories();
   },
@@ -517,6 +530,12 @@ const actions = {
     }
     actions.broadcastUserInfo()
   },
+  clearFaderTimeout({ state }, id) {
+    if (state.users[id].faderTimeOut) {
+      clearTimeout(state.users[id].faderTimeOut)
+      state.users[id].faderTimeOut = null
+    }
+  },
   setUserInfo({ state, actions }, data) {
     const id = data.id;
     delete data.id;
@@ -528,6 +547,7 @@ const actions = {
     }
     state.users[id].opacity = 1
     actions.computeCategories();
+    actions.clearFaderTimeout(id)
     if (state.attrs.roomStatus === 'joined') actions.connectRoom()
 
 

@@ -128,6 +128,7 @@ function MainWindow({ startCall, clientId }) {
                   <Button
                     variant="contained"
                     color="primary"
+                    disabled={ state.attrs.roomStatus === "joined" }
                     onClick={ actions.joinRoom }
                   >
                     Join
@@ -137,9 +138,10 @@ function MainWindow({ startCall, clientId }) {
                   <Button
                     variant="contained"
                     color="primary"
+                    disabled={ state.attrs.roomStatus !== "joined" }
                     onClick={ actions.leaveRoom }
                   >
-                    End
+                    Leave
               </Button>
                 </div>
                 <div className="inline m-2">
