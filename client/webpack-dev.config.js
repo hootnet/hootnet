@@ -58,11 +58,7 @@ const configs = addBaseConfig({
 
 const doAsync = async () => {
   const hostName = process.env.HOSTNAME;
-<<<<<<< HEAD
   const matcher = hostName ? hostName.match(/^sse-sandbox-(.*)$/) : null
-=======
-  const matcher = hostName.match(/^sse-sandbox-(.*)$/);
->>>>>>> d3333e08cf462bfa22d7fa03a91a5e0ca5cb69fe
   if (matcher) {
     configs.devServer.public = `https://${matcher[1]}-${socketConfig.PORT}.sse.codesandbox.io/`;
     console.log('CONFIG ', configs.devServer.public);
