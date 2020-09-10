@@ -6,7 +6,9 @@ import ControlRoomWindow from './ControlRoomWindow';
 import DirectorPage from './DirectorPage';
 import { useApp } from './app';
 import StreamRecorderDemo from './components/StreamRecorderDemo'
-import TestPage from "./components/TestPage";
+import Template from "./components/Template";
+import Message from "./components/Message";
+
 import Video from "./components/Video";
 
 
@@ -42,8 +44,10 @@ const WindowConfig = ({ startCallHandler }) => {
             pause: () => console.log("paused")
           } }
         />
-      case 'testpage':
-        return <TestPage />
+      case 'template':
+        return <Template />
+      case 'message':
+        return <Message />
       default:
         return null;
     }
@@ -51,7 +55,7 @@ const WindowConfig = ({ startCallHandler }) => {
 
   return (
     <div>
-      <ToastContainer />
+      <Message /> 
       { state.componentStatus.recorderDemo === "show" ? <StreamRecorderDemo /> : null }
       { currentWindow() }
 

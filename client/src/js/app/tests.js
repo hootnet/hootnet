@@ -49,6 +49,12 @@ const config = {
       actions.tests._init(state, actions)
       state.tests.testResults = []
     },
+    _connectCascade({ actions }) {
+      test('sees if cascade is connected properly', () => {
+        actions.relayAction({ to: state.attrs.id, op: 'doAction', data: { action: 'diag', data: 'this is a test' } })
+      })
+
+    },
     _setCascadeOrder({ state, actions }) {
       actions.tests._init(state, actions)
       state.users['s1'] = { name: 'Goober' }

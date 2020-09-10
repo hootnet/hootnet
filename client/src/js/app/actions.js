@@ -10,11 +10,14 @@ const actionOps = {
   },
   onReload({ state, actions }) {
     actions.setTestWindow('')
-    actions.tests.clearResults()
-    // actions.tests._sessionOfName()
-    actions.tests._setCascadeOrder()
-  },
+    state._message.delay = 2000
+    setTimeout(() => actions.setMessage("message 1"), 1000)
+    setTimeout(() => actions.setMessage("message 2"), 5000)
 
+    // actions.tests.clearResults()
+    // // actions.tests._sessionOfName()
+    // actions.tests._setCascadeOrder()
+  },
   setTestWindow({ state }, window) {
     state.testWindow = window
   },
@@ -160,8 +163,8 @@ const actionOps = {
       return;
     }
     actions.startCascaders();
-    actions.startControllers();
-    actions.startViewers();
+    // actions.startControllers();
+    // actions.startViewers();
   },
   // startChat({ state, actions }) {
   //     state.members.forEach(id => {
@@ -580,15 +583,15 @@ const actionOps = {
   setMessage({ state, actions }, value = "default message") {
     // console.log("Setmessage", state)
     state._message.text = value;
-    toast(value, {
-      position: "top-center",
-      autoClose: 4000,
-      hideProgressBar: true,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined
-    });
+    // toast(value, {
+    //   position: "top-center",
+    //   autoClose: 4000,
+    //   hideProgressBar: true,
+    //   closeOnClick: true,
+    //   pauseOnHover: true,
+    //   draggable: true,
+    //   progress: undefined
+    // });
     setTimeout(actions.clearMessage, state._message.delay);
   },
   clearMessage({ state }) {
