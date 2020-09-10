@@ -1,8 +1,8 @@
-import labeledStream from "./labeledStream";
-import Blobber from "./Blobber";
-import Restreamer from "./Restreamer";
-const BLOB_CHANNEL = "BlobChannel";
-const TEXT_CHANNEL = "TextChannel";
+import labeledStream from './labeledStream';
+import Blobber from './Blobber';
+import Restreamer from './Restreamer';
+const BLOB_CHANNEL = 'BlobChannel';
+const TEXT_CHANNEL = 'TextChannel';
 class WebRTCConnector {
   static getTextChannelName() {
     return TEXT_CHANNEL;
@@ -15,13 +15,19 @@ class WebRTCConnector {
     this.peer = peer;
     this.channels = {};
     this.peer = peer;
-    this.createDataChannel(TEXT_CHANNEL, "text");
-    this.createDataChannel(BLOB_CHANNEL, "binary");
+    this.textHandler = this.createDataChannel(TEXT_CHANNEL, 'text');
+    this.textHandler.onOpenChannel = () => {
+      if (this.onOpenTextChannel) this.onOpenTextChannel();
+    };
+    this.binaryHandler = this.createDataChannel(BLOB_CHANNEL, 'binary');
+    this.binaryHandler.onOpenChannel = () => {
+      if (this.onOpenBinaryChannel) this.onOpenBinaryChannel();
+    };
     this.blobChannel = this.channels[BLOB_CHANNEL].channel;
     this.textChannel = this.channels[TEXT_CHANNEL].channel;
     // this.sendText = this.sendText.bind(this);
 
-    this.peer.addEventListener("datachannel", this.awaitDataChannel.bind(this));
+    this.peer.addEventListener('datachannel', this.awaitDataChannel.bind(this));
   }
   getTextChannel() {
     return this.getChannel(WebRTCConnector.getTextChannelName());
@@ -32,10 +38,12 @@ class WebRTCConnector {
   createDataChannel(name, type) {
     const channel = this.peer.createDataChannel(name);
     const handler = new ChannelHandler(name, channel);
-    if (type === "binary") {
-      channel.binaryType = "arraybuffer";
+    if (type === 'binary') {
+      channel.binaryType = 'arraybuffer';
     }
     this.channels[name] = { channel, handler };
+
+    return handler;
     // const theChannel = this.channels[event.channel.label]
   }
   getChannel(name) {
@@ -68,6 +76,10 @@ class WebRTCConnector {
       // console.log("Got Blob ", blob.constructor.name, blob.size);
       restreamer.addBlob(blob);
     });
+    return restreamer;
+  }
+  createDefaultStream(stream) {
+    this.createStream(BLOB_CHANNEL, stream);
   }
   createStream(channelName, stream) {
     const ch = this.getHandler(channelName);
@@ -78,8 +90,11 @@ class WebRTCConnector {
       ch.sendBinaryData(message);
     });
     ch.onMessage((data) => {
-      console.log("Stream Message");
+      console.log('Stream Message');
     });
+  }
+  startDefaultStream() {
+    this.startStream(BLOB_CHANNEL);
   }
   startStream(channelName) {
     const blobber = this.getBlobber(channelName);
@@ -101,10 +116,12 @@ class WebRTCConnector {
   awaitDataChannel(event) {
     console.log(
       this.name,
-      "received a data channel notifiction",
+      'received a data channel notifiction',
       event.channel.label
     );
-    this.getHandler(event.channel.label).setDataChannel(event.channel);
+    const handler = this.getHandler(event.channel.label);
+    handler.setDataChannel(event.channel);
+    handler.onOpenChannel();
   }
 
   onBlob(cb) {
@@ -122,7 +139,7 @@ class WebRTCConnector {
     this.getHandler(TEXT_CHANNEL).sendText(message);
   }
   onText(cb) {
-    console.log("Called onText WITH CB");
+    console.log('Called onText WITH CB');
     this.getHandler(TEXT_CHANNEL).onMessage(cb);
   }
 }
@@ -135,8 +152,8 @@ class ChannelHandler {
   }
   setDataChannel(dataChannel) {
     this.dataChannel = dataChannel;
-    this.dataChannel.addEventListener("open", this.awaitOpen.bind(this));
-    this.dataChannel.addEventListener("close", this.awaitClose.bind(this));
+    this.dataChannel.addEventListener('open', this.awaitOpen.bind(this));
+    this.dataChannel.addEventListener('close', this.awaitClose.bind(this));
   }
   awaitClose(event) {
     // console.log("PC1 Remote close");
@@ -144,15 +161,16 @@ class ChannelHandler {
   }
   awaitOpen(event) {
     // console.log(this.name, "Remote open");
-    this.channel.addEventListener("message", this.awaitMesage.bind(this));
-    this.dataChannel.addEventListener("message", this.awaitDCMesage.bind(this));
+    this.channel.addEventListener('message', this.awaitMesage.bind(this));
+    this.dataChannel.addEventListener('message', this.awaitDCMesage.bind(this));
+    if (this.openCB) this.openCB();
   }
   sendText(message) {
-    console.log("Send Text called");
+    console.log('Send Text called');
     this.channel.send(message);
   }
   sendBinaryData(message) {
-    if (message.constructor.name === "ArrayBuffer") {
+    if (message.constructor.name === 'ArrayBuffer') {
       this.channel.send(message);
     } else {
       message.arrayBuffer().then((buffer) => {
@@ -162,10 +180,10 @@ class ChannelHandler {
     }
   }
   respond(message) {
-    this.dataChannel.send("response: " + message);
+    this.dataChannel.send('response: ' + message);
   }
   awaitMesage(event) {
-    console.log("received on channel", this.name, JSON.stringify(event.data));
+    console.log('received on channel', this.name, JSON.stringify(event.data));
     console.log(event.data);
   }
   onMessage(cb) {

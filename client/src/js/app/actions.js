@@ -4,7 +4,7 @@ import labeledStream from "../streamutils/labeledStream";
 import PeerConnection from "../PeerConnection";
 // import VideoStreamMerger from "../streamutils/video-stream-merger";
 
-const actions = {
+const actionOps = {
   incrPeer({ state }) {
     state.peerEvents++
   },
@@ -13,6 +13,7 @@ const actions = {
     actions.tests.clearResults()
     actions.tests._sessionOfName()
   },
+
   setTestWindow({ state }, window) {
     state.testWindow = window
   },
@@ -34,16 +35,29 @@ const actions = {
   setRemoteStream({ state }, { member, stream }) {
     state.users[member].remoteStream = stream
   },
+  getConnector({ state }, id) {
+
+  },
+  setPeerConnection({ state }, { id, pc }) {
+    state.users[id].peerConnection = pc
+  },
+  getPeerConnection({ state }, id) {
+    return json(state.users[id].peerConnection)
+  },
+  clearPeerConnection({ state, actions }, id) {
+    const pc = actions.getPeerConnection(id)
+    if (pc) pc.stop()
+    state.users[id].peerConnection = null
+  },
   clearRemoteStream({ state, actions }, id) {
     const stream = actions.getRemoteStream(id)
     stream.getTracks().forEach(track => {
       track.stop()
       stream.removeTrack(track)
     })
-    const pc = json(state.users[id].peerConnection)
-    if (pc) pc.stop()
-    state.users[id].peerConnection = null
     state.users[id].remoteStream = null
+    actions.clearPeerConnection(id)
+
   },
   sessionOfName({ state }, name) {
     // console.log("TRANSLATE", name)
@@ -284,7 +298,9 @@ const actions = {
     //     actions.showCallPage();
     // }
     const pc = new PeerConnection(friendID, state);
-    state.users[friendID].peerConnection = pc
+    // actions.setPeerConnection({id: friendID, pc})
+    actions.setPeerConnection({ id: friendID, pc })
+    // state.users[friendID].peerConnection = pc
     // state.callInfo[friendID] = {
     //   pc,
     //   config,
@@ -678,7 +694,8 @@ const actions = {
       }
       actions.broadcastUserInfo()
       effects.socket.actions.register(json(state.attrs));
+      actions.joinRoom()
     }
   }
 };
-export default actions;
+export default actionOps;
