@@ -55,6 +55,18 @@ const config = {
       })
 
     },
+    _setMessage({ actions, state }) {
+      actions.tests._init(state, actions)
+      state._message.delay = 1000
+      setTimeout(() => actions.setMessage("message 1"), 1000)
+      setTimeout(() => actions.setError("Error"), 2500)
+
+      setTimeout(() => {
+        state._message.delay = 5000
+        actions.setWarning("A warning")
+      }, 5000)
+
+    },
     _setCascadeOrder({ state, actions }) {
       actions.tests._init(state, actions)
       state.users['s1'] = { name: 'Goober' }

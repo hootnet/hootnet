@@ -4,11 +4,9 @@ import { H3 } from "../Typography"
 import IconButton from '@material-ui/core/IconButton';
 import CancelIcon from '@material-ui/icons/Cancel';
 const Box = ({ contents }) => {
+  const { actions } = useApp()
   const [style, setStyle] = React.useState("flex")
-  const hideMessage = () => {
-    console.log("Stule hidden")
-    setStyle("hidden")
-  }
+
   return (
     <React.Fragment>
 
@@ -17,7 +15,7 @@ const Box = ({ contents }) => {
           .map((el, index) => {
             return (<div className={ style } key={ index }>
               { el }
-              <IconButton aria-label="delete" onClick={ hideMessage } color="primary">
+              <IconButton aria-label="delete" onClick={ actions.clearMessage } color="primary">
                 <CancelIcon className="bg-red text-blue-500" fontSize="large" />
               </IconButton>
               {/* <div className="flex-none text-black border-black border w-8">X</div> */ }
@@ -32,6 +30,18 @@ const Message = ({ error, warning, message }) => {
   const { state, actions } = useApp()
   // React.useEffect(() => { }, [])
   message = state._message.text
+  switch (state._message.level) {
+    case "warning":
+      if (!warning) warning = message
+      message = ''
+      break
+    case "error":
+      if (!error) error = message
+      message = ''
+      break
+    default:
+
+  }
   return (
     <React.Fragment>
       <Box contents={

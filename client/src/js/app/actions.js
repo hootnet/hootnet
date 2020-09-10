@@ -5,15 +5,9 @@ import PeerConnection from "../PeerConnection";
 // import VideoStreamMerger from "../streamutils/video-stream-merger";
 
 const actionOps = {
-  incrPeer({ state }) {
-    state.peerEvents++
-  },
   onReload({ state, actions }) {
     actions.setTestWindow('')
-    state._message.delay = 2000
-    setTimeout(() => actions.setMessage("message 1"), 1000)
-    setTimeout(() => actions.setMessage("message 2"), 5000)
-
+    actions.tests._setMessage()
     // actions.tests.clearResults()
     // // actions.tests._sessionOfName()
     // actions.tests._setCascadeOrder()
@@ -581,21 +575,20 @@ const actionOps = {
 
   },
   setMessage({ state, actions }, value = "default message") {
-    // console.log("Setmessage", state)
     state._message.text = value;
-    // toast(value, {
-    //   position: "top-center",
-    //   autoClose: 4000,
-    //   hideProgressBar: true,
-    //   closeOnClick: true,
-    //   pauseOnHover: true,
-    //   draggable: true,
-    //   progress: undefined
-    // });
     setTimeout(actions.clearMessage, state._message.delay);
+  },
+  setWarning({ state, actions }, value = "default warning") {
+    state._message.level = "warning"
+    actions.setMessage(value)
+  },
+  setError({ state, actions }, value = "default error") {
+    state._message.level = "error"
+    actions.setMessage(value)
   },
   clearMessage({ state }) {
     state._message.text = "";
+    state._message.level = ""
   },
 
   diag({ state }, diag) {
