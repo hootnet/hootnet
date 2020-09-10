@@ -11,7 +11,8 @@ const actionOps = {
   onReload({ state, actions }) {
     actions.setTestWindow('')
     actions.tests.clearResults()
-    actions.tests._sessionOfName()
+    // actions.tests._sessionOfName()
+    actions.tests._setCascadeOrder()
   },
 
   setTestWindow({ state }, window) {
@@ -143,8 +144,16 @@ const actionOps = {
   relayAction({ effects }, { to, op, data }) {
     effects.socket.actions.relayEffect(to, op, data);
   },
+  setCascadeOrder({ state, actions }, order) {
+    const separators = /[\s:,]+/
+    const cascaders = order.split(separators)
+      .map(name => actions.sessionOfName(name))
+      .filter(item => !item.match(separators))
+    state.sessions.cascaders = cascaders
+    return cascaders
+  },
 
-  startCascade({ state, actions }) {
+  startCascade({ state, actions }, spec) {
     console.clear();
     if (state.members.length < 2) {
       actions.setMessage("Can't start a cascade with only you in the room.");

@@ -49,6 +49,19 @@ const config = {
       actions.tests._init(state, actions)
       state.tests.testResults = []
     },
+    _setCascadeOrder({ state, actions }) {
+      actions.tests._init(state, actions)
+      state.users['s1'] = { name: 'Goober' }
+      state.users['s2'] = { name: 'Quz' }
+      state.users['s3'] = { name: 'Zooby' }
+
+      test('checks comma list of actions', () => {
+        // expect(actions.sessionOfName(state.attrs.id)).toBe(state.attrs.id)
+        actions.setCascadeOrder('Goober,Quz,Zooby')
+        expect(state.sessions.cascaders.join(':')).toBe('s1:s2:s3')
+      })
+      's1,s2,s3'.split(',').map(key => delete state.users[key])
+    },
     _sessionOfName({ state, actions }) {
       actions.tests._init(state, actions)
 
