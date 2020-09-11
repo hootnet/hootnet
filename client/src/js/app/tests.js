@@ -1,40 +1,4 @@
-let _state, _actions
-let testMessage = "no test"
-const test = (message, fn) => {
-  const state = _state
-  const actions = _actions
-  testMessage = message
-  //Add rewriting code, maybe later
-  // const modText = fnText.split("\n").slice(1, -1).join("\n")
-  // const fnText = fn + ""
-  // console.log("fUNCTON GEING BEStED", modText)
-  let logMessage
-  let style
-  try {
-    fn()
-    logMessage = "✅ %c" + message
-    style = "color: green; font-style: italic; background-color: white"
-    // eval(modText)
-  } catch (e) {
-    logMessage = "❌ %c" + message + " " + e.message
-    style = "color: red; font-style: italic; background-color: white"
-  }
-  state.tests.testResults.push({ message, style })
-  console.log(logMessage, style)
-  //
-}
-class expecterator {
-  constructor(value) {
-    this.original = value
-  }
-  toBe(value) {
-    if (value === this.original) return
-    throw new Error("Expected " + this.original + " got " + value)
-  }
-}
-const expect = (value) => {
-  return new expecterator(value)
-}
+import { test, expect, init } from '../../util/testUtils'
 const config = {
   state: {
     testResults: [],
@@ -42,8 +6,7 @@ const config = {
   },
   actions: {
     _init({ state, actions }) {
-      _state = state
-      _actions = actions
+      init(state, actions)
     },
     clearResults({ state, actions }) {
       actions.tests._init(state, actions)
@@ -53,6 +16,26 @@ const config = {
       test('sees if cascade is connected properly', () => {
         actions.relayAction({ to: state.attrs.id, op: 'doAction', data: { action: 'diag', data: 'this is a test' } })
       })
+
+    },
+    _parseCommand({ state, actions }) {
+      actions.tests._init(state, actions)
+
+      test('simple command, no args',
+        () => {
+          expect(actions.parseCommand("all: setMessage")).toBe({ to: 'all', op: 'setMessage' })
+        })
+      test('command whith an arg',
+        () => {
+          expect(actions.parseCommand("all: setMessage 'this is a test' ")).toBe({ to: 'all', op: 'setMessage', arg: 'this is a test' })
+        })
+      test('process part of command',
+        () => {
+          expect(actions.processTo("all")).toBe(state.members)
+          const memberNames = state.members.map(member => state.users[member].name).join(",")
+          expect(actions.processTo(memberNames)).toBe(state.members)
+
+        })
 
     },
     _setMessage({ actions, state }) {

@@ -43,6 +43,10 @@ const effects = {
       startChat(data) {
         effects.actions.startChatters()
       },
+      doAction(data){
+        effects.actions.doAction(data)
+
+      },
       // endChat(data) {
       //     effects.actions.endChatters()
       // },

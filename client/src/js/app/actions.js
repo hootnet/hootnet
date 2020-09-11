@@ -6,8 +6,11 @@ import PeerConnection from "../PeerConnection";
 
 const actionOps = {
   onReload({ state, actions }) {
+    actions.tests._init()
     actions.setTestWindow('')
-    actions.tests._setMessage()
+    actions.tests._parseCommand()
+    actions.cascade()
+    // actions.tests._setMessage()
     // actions.tests.clearResults()
     // // actions.tests._sessionOfName()
     // actions.tests._setCascadeOrder()
@@ -55,7 +58,9 @@ const actionOps = {
     })
     state.users[id].remoteStream = null
     actions.clearPeerConnection(id)
-
+  },
+  sessionsOfList({ state, actions }, list) {
+    return list.split(',').map(name => actions.sessionOfName(name))
   },
   sessionOfName({ state }, name) {
     // console.log("TRANSLATE", name)
@@ -72,6 +77,43 @@ const actionOps = {
   setCurrentWindow({ state }, window) {
     state.currentWindow = window
   },
+  parseCommand({ actions }, command) {
+    const matcher = command.match(/^\s*(\w*)\s*:\s*(\w*)\s*(.*)?$/)
+    if (matcher[3] === undefined) return { to: matcher[1], op: matcher[2] }
+    const quote = matcher[3].match(/"([^"]*)"/)
+    if (quote) { matcher[3] = quote[1] } else {
+      const quote1 = matcher[3].match(/'([^']*)'/)
+      if (quote1) { matcher[3] = quote1[1] }
+    }
+    return { to: matcher[1], op: matcher[2], arg: matcher[3] }
+  },
+  processTo({ actions, state }, list) {
+    switch (list) {
+      case 'all':
+        return state.members
+      case 'cascaders':
+        return state.sessions.cascaders
+      case 'controler':
+        return state.sessions.controlers
+      default:
+        return actions.sessionsOfList(list)
+    }
+
+  },
+  exec({ actions }, command) {
+    const parse = actions.parseCommand(command)
+    const toList = actions.processTo(parse.to)
+    toList.map(to => actions.relayAction({ to, op: 'doAction', data: {action: parse.op, arg: parse.arg} }))
+  },
+  cascade({ actions }) {
+    actions.exec("all: setWarning 'some  more warning'")
+    // actions.exec("all: setCascadeOrder noel-jess-neale")
+    // actions.exec("mike: makeController")
+    // actions.exec("cascaders: connectCascaders")
+    // actions.exec("cascaders: connectToController")
+    // actions.exec("controller connectToCascaders")
+    // actions.exec("noel: startCascade")
+  },
   doAction({ actions }, action) {
     if (typeof action !== 'object') {
       action = { action }
@@ -80,7 +122,7 @@ const actionOps = {
       action = { action: 'diag', payload: "need an action" }
       return
     }
-    actions[action.action](action.payload)
+    actions[action.action](action.arg)
   },
   editor: {
     set({ state }, text) {
@@ -150,16 +192,16 @@ const actionOps = {
     return cascaders
   },
 
-  startCascade({ state, actions }, spec) {
-    console.clear();
-    if (state.members.length < 2) {
-      actions.setMessage("Can't start a cascade with only you in the room.");
-      return;
-    }
-    actions.startCascaders();
-    // actions.startControllers();
-    // actions.startViewers();
-  },
+  // startCascade({ state, actions }, spec) {
+  //   console.clear();
+  //   if (state.members.length < 2) {
+  //     actions.setMessage("Can't start a cascade with only you in the room.");
+  //     return;
+  //   }
+  //   actions.startCascaders();
+  //   // actions.startControllers();
+  //   // actions.startViewers();
+  // },
   // startChat({ state, actions }) {
   //     state.members.forEach(id => {
   //         actions.relayAction({
