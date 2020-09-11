@@ -18,6 +18,35 @@ const actionOps = {
     // // actions.tests._sessionOfName()
     // actions.tests._setCascadeOrder()
   },
+  allOff({ state }) {
+    Object.keys(state.users).map(key => {
+      state.users[key].video = "off"
+      state.users[key].muted = true
+    })
+  },
+  allOn({ state }) {
+    Object.keys(state.users).map(key => {
+      state.users[key].video = "on"
+      state.users[key].muted = false
+    })
+  },
+  soundOff({ state }, id) {
+    if (!id) id = state.attrs.id
+    state.users[id].muted = true
+  },
+  soundOn({ state }, id) {
+    if (!id) id = state.attrs.id
+    state.users[id].muted = false
+  },
+  videoOff({ state }, id) {
+    if (!id) id = state.attrs.id
+    state.users[id].video = "off"
+  },
+  videoOn({ state }, id) {
+    if (!id) id = state.attrs.id
+    state.users[id].video = "on"
+  },
+
   setTestWindow({ state }, window) {
     state.testWindow = window
   },

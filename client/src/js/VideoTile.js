@@ -26,16 +26,16 @@ const VideoTile = ({ id }) => {
   const displayTile = () => {
     // console.log("Evaluatiing display Tile", { room: state.users[id].roomStatus, connection: state.users[id].connectionStatus })
     if (state.attrs.id !== id) {
-      if ((state.attrs.roomStatus !== "joined") || (state.users[id] && state.users[id].roomStatus !== "joined")) {
+      if ((state.users[id].video === "off") || (state.attrs.roomStatus !== "joined") || (state.users[id] && state.users[id].roomStatus !== "joined")) {
         return (<H3 >{ state.users[id].name } { state.users[id].roomStatus }</H3>)
       }
     }
     return (
       <video className="flex" ref={ ref }
-        autoPlay muted={ id === state.attrs.id } />
+        autoPlay={ state.users[id].video !== "off" } muted={ id === state.attrs.id || state.users[id].muted } />
     )
   }
-  console.log(state.users[id].video === "off" ? " fa-video" : " fa-video-slash")
+  // console.log(state.users[id].video === "off" ? " fa-video" : " fa-video-slash")
   return <React.Fragment>
     <div style={ { opacity: state.users[id].opacity } } className="flex-col text-black bg-gray-800  ">
       { displayTile(state.users[id].roomStatus) }
@@ -47,15 +47,30 @@ const VideoTile = ({ id }) => {
            text-black mr-1 flex-1 btn-action fa `
             + (!(state.users[id].video === "off") ? "bg-green-400 fa-video" : " bg-red-600 fa-video-slash")
           }
-        // onClick={ acceptWithVideo(true)
+          onClick={ () => {
+            if (!(state.users[id].video === "off")) {
+              actions.videoOff(id)
+              ref.current.pause()
+            } else {
+              actions.videoOn(id)
+              ref.current.play()
+
+            }
+          } }
         />
         <button
           type='button'
           className={ `mt-1 bg-gray-200 border-1 border-solid border-gray-700 rounded  
           text-black ml-1 flex-1 btn-action fa `
-            + (!state.users[id].muted ? "bg-green-400 fa-microphone" : " bg-red-300 fa-microphone-slash")
+            + (!state.users[id].muted ? "bg-green-400 fa-volume-up" : " bg-red-300 fa-volume-off")
           }
-        // onClick={ acceptWithVideo(false) }
+          onClick={ () => {
+            if (!state.users[id].muted) {
+              actions.soundOff(id)
+            } else {
+              actions.soundOn(id)
+            }
+          } }
         />
       </div>
       {/* { console.log('rendering the tile') } */ }
