@@ -27,11 +27,11 @@ const VideoTile = ({ id }) => {
     // console.log("Evaluatiing display Tile", { room: state.users[id].roomStatus, connection: state.users[id].connectionStatus })
     if (state.attrs.id !== id) {
       if ((state.users[id].video === "off") || (state.attrs.roomStatus !== "joined") || (state.users[id] && state.users[id].roomStatus !== "joined")) {
-        return (<H3 >{ state.users[id].name } { state.users[id].roomStatus }</H3>)
+        return (<H3 className="h-32 py-8 bg-gray-500 text-white" >{ state.users[id].name } </H3>)
       }
     }
     return (
-      <video className="flex" ref={ ref }
+      <video className="flex h-32 align-middle " ref={ ref }
         autoPlay={ state.users[id].video !== "off" } muted={ id === state.attrs.id || state.users[id].muted } />
     )
   }
@@ -50,10 +50,10 @@ const VideoTile = ({ id }) => {
           onClick={ () => {
             if (!(state.users[id].video === "off")) {
               actions.videoOff(id)
-              ref.current.pause()
+              // ref.current.pause()
             } else {
               actions.videoOn(id)
-              ref.current.play()
+              // ref.current.play()
 
             }
           } }
