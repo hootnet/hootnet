@@ -118,6 +118,15 @@ function MainWindow({ startCall, clientId }) {
                   >
                     Demo
               </Button>
+                  <Button
+                    style={ { background: "green" } }
+                    className="bg-green-600 text-black p-2"
+                    // type="Button"
+                    variant="contained"
+                    onClick={ actions.openWindow }
+                  >
+                    Open
+              </Button>
 
                 </div>
                 <br />

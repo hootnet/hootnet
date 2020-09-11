@@ -10,6 +10,8 @@ import Template from "./components/Template";
 import Message from "./components/Message";
 
 import Video from "./components/Video";
+import VideoTile from "./VideoTile";
+import VideoTiles from "./VideoTiles";
 
 
 
@@ -44,6 +46,8 @@ const WindowConfig = ({ startCallHandler }) => {
             pause: () => console.log("paused")
           } }
         />
+      case 'videotile':
+        return <VideoTiles id={ state.attrs.id } />
       case 'template':
         return <Template />
       case 'message':
@@ -55,7 +59,7 @@ const WindowConfig = ({ startCallHandler }) => {
 
   return (
     <div>
-      <Message /> 
+      <Message />
       { state.componentStatus.recorderDemo === "show" ? <StreamRecorderDemo /> : null }
       { currentWindow() }
 

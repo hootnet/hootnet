@@ -7,9 +7,12 @@ import PeerConnection from "../PeerConnection";
 const actionOps = {
   onReload({ state, actions }) {
     actions.tests._init()
-    actions.setTestWindow('')
-    actions.tests._parseCommand()
-    actions.cascade()
+    // actions.setTestWindow('videotile')
+    // actions.tests._parseCommand()
+    // actions.cascade()
+    // actions.openWindow({ name: "window10", spec: "left=200,height=200,width=200" })
+    // actions.openWindow({ name: "window27", spec: "left=600,height=200,width=200" })
+
     // actions.tests._setMessage()
     // actions.tests.clearResults()
     // // actions.tests._sessionOfName()
@@ -77,6 +80,10 @@ const actionOps = {
   setCurrentWindow({ state }, window) {
     state.currentWindow = window
   },
+  openWindow({ state }, { location = window.location, name = "new", spec = "left=200, height=200, width = 200" }) {
+    console.log("OPEN WINDOWS", { location, name, spec })
+    window.open(location, name, spec)
+  },
   parseCommand({ actions }, command) {
     const matcher = command.match(/^\s*(\w*)\s*:\s*(\w*)\s*(.*)?$/)
     if (matcher[3] === undefined) return { to: matcher[1], op: matcher[2] }
@@ -103,7 +110,7 @@ const actionOps = {
   exec({ actions }, command) {
     const parse = actions.parseCommand(command)
     const toList = actions.processTo(parse.to)
-    toList.map(to => actions.relayAction({ to, op: 'doAction', data: {action: parse.op, arg: parse.arg} }))
+    toList.map(to => actions.relayAction({ to, op: 'doAction', data: { action: parse.op, arg: parse.arg } }))
   },
   cascade({ actions }) {
     actions.exec("all: setWarning 'some  more warning'")

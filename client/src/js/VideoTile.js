@@ -31,13 +31,33 @@ const VideoTile = ({ id }) => {
       }
     }
     return (
-      <video ref={ ref }
+      <video className="flex" ref={ ref }
         autoPlay muted={ id === state.attrs.id } />
     )
   }
+  console.log(state.users[id].video === "off" ? " fa-video" : " fa-video-slash")
   return <React.Fragment>
-    <div style={ { opacity: state.users[id].opacity } } className=" text-black bg-gray-800 h-32 ">
+    <div style={ { opacity: state.users[id].opacity } } className="flex-col text-black bg-gray-800  ">
       { displayTile(state.users[id].roomStatus) }
+      <div className="flex h-8 bg-gray-200">
+
+        <button
+          type='button'
+          className={ `mt-1 border-1 border-solid border-gray-700 rounded 
+           text-black mr-1 flex-1 btn-action fa `
+            + (!(state.users[id].video === "off") ? "bg-green-400 fa-video" : " bg-red-600 fa-video-slash")
+          }
+        // onClick={ acceptWithVideo(true)
+        />
+        <button
+          type='button'
+          className={ `mt-1 bg-gray-200 border-1 border-solid border-gray-700 rounded  
+          text-black ml-1 flex-1 btn-action fa `
+            + (!state.users[id].muted ? "bg-green-400 fa-microphone" : " bg-red-300 fa-microphone-slash")
+          }
+        // onClick={ acceptWithVideo(false) }
+        />
+      </div>
       {/* { console.log('rendering the tile') } */ }
     </div>
     <div className="p-2 h-8 text-black bg-yellow-100" >
