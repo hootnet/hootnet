@@ -7,7 +7,7 @@ import PeerConnection from "../PeerConnection";
 const actionOps = {
   onReload({ state, actions }) {
     actions.tests._init()
-    // actions.setTestWindow('videotile')
+    actions.setTestWindow('')
     // actions.tests._parseCommand()
     // actions.cascade()
     // actions.openWindow({ name: "window10", spec: "left=200,height=200,width=200" })
@@ -436,6 +436,78 @@ const actionOps = {
   //   const id = state.attrs.id;
   //   actions.createCasdadeStream();
   // },
+  createBlobbedCascade({ state }) {
+    if (!state.streams.cascaders.includes(state.attrs.id)) return
+    const merger = labeledStream(
+      json(state.streams.localStream),
+      state.attrs.name,
+      state.streams.cascaders.indexOf(state.attrs.id),
+      state.sessions.cascaders.length
+    );
+    state.streams.cascadeMerger = merger;
+    state.streams.cascadeStream = merger.result;
+    if (state.index < state.sessions.cascaders.length - 1) {
+      const sourceConnector = actions.getConnector(state.sessions.cascaders[state.index - 1])
+
+      sourceConnector.onOpenBinaryChannel = () => {
+        const loRezStream = merger.result;
+        blobbedVideo.srcObject = loRezStream;
+        sourceConnector.createDefaultStream(loRezStream);
+        sourceConnector.startDefaultStream();
+      };
+      console.log("RECEIVED", incomingStream);
+      dupVideo.srcObject = sentVideo.captureStream();
+    }
+    if (state.index > 0) {
+      const destConnector = actions.getConnector(state.sessions.cascaders[state.index - 1])
+      const sentVideo = document.createElement('video')
+      destConnector.onOpenBinaryChannel = () => {
+        const merger1 = labeledStream(localStream, "test", 2, 4);
+        sentVideo = document.createElement("video");
+        const restreamer = destConnector.receiveStream(
+          BLOB_CHANNEL,
+          { audio: true, video: true },
+          sentVideo
+        );
+        console.log("RECEIVED", restreamer);
+        sentVideo.addEventListener("canplay", () => {
+          merger1.addStream(sentVideo.captureStream(), {
+            index: -1,
+            x: 0, // position of the topleft corner
+            y: 0,
+            width: merger.width,
+            height: merger.height
+          });
+        });
+        // dupVideo.srcObject = sentVideo.captureStream();
+        // dupVideo.srcObject = merger1.result;
+      };
+
+    };
+
+  },
+  sendStreamToControl({ state }) {
+    const localStream = json(state.streams.localStream)
+    if (state.index) {
+      const sourceConnector = actions.getConnector(state.sessions.cascaders[state.sessions.controllers[0]])
+      sourceConnector.onOpenBinaryChannel = () => {
+        sourceConnector.createDefaultStream(localStream);
+        sourceConnector.startDefaultStream();
+      };
+    }
+  },
+  getStreamsInControl({ state }) {
+    state.sessions.cascaders.foEach(cascader => {
+      const destConnector = actions.getConnector(cascader)
+      destConnector.onOpenBinaryChannel = () => {
+        const incomingStream = destConnector.receiveStream(
+          BLOB_CHANNEL,
+          { audio: true, video: true },
+          state.controllerPage.videos[cascader]
+        );
+      }
+    })
+  },
   createCascadeStream({ state }) {
     if (!state.streams.cascadeStream) {
       const merger = labeledStream(

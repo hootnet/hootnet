@@ -15,7 +15,7 @@ const VideoTiles = () => {
         const user = json(state.users[key])
         if (!user) return null
         // console.log("muted", user.name, key === state.attrs.id)
-        return <div key={ key } className="flex-col m-2 h-25 w-1/4" >
+        return <div key={ key } className="flex-col m-2 h-25 place-content-center" >
           <VideoTile id={ key } />
         </div>
       }) }

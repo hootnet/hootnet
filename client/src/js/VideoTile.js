@@ -37,13 +37,14 @@ const VideoTile = ({ id }) => {
   }
   // console.log(state.users[id].video === "off" ? " fa-video" : " fa-video-slash")
   return <React.Fragment>
-    <div style={ { opacity: state.users[id].opacity } } className="flex-col text-black bg-gray-800  ">
+    <div className="place-start " style={ { opacity: state.users[id].opacity } }
+      className="flex-col border-1 border-solid border-gray-700 text-black border w-48 p-1 ">
       { displayTile(state.users[id].roomStatus) }
       <div className="flex h-8 bg-gray-200">
 
         <button
           type='button'
-          className={ `mt-1 border-1 border-solid border-gray-700 rounded 
+          className={ `mt-1 border border-solid border-gray-700 rounded 
            text-black mr-1 flex-1 btn-action fa `
             + (!(state.users[id].video === "off") ? "bg-green-400 fa-video" : " bg-red-600 fa-video-slash")
           }
@@ -60,7 +61,7 @@ const VideoTile = ({ id }) => {
         />
         <button
           type='button'
-          className={ `mt-1 bg-gray-200 border-1 border-solid border-gray-700 rounded  
+          className={ `mt-1 bg-gray-200 border border-solid border-gray-700 rounded  
           text-black ml-1 flex-1 btn-action fa `
             + (!state.users[id].muted ? "bg-green-400 fa-volume-up" : " bg-red-300 fa-volume-off")
           }
