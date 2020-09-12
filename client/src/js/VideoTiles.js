@@ -8,10 +8,11 @@ const VideoTiles = () => {
   const { state, actions, effects } = useApp()
   const [stream, setStream] = React.useState(null)
   const [refs, setRefs] = React.useState({})
+  if (!state.sessions.allSessions) return null
   return <React.Fragment>
     <div className="flex" >
 
-      { Object.keys(state.users).map((key, index) => {
+      { state.sessions.allSessions.map((key, index) => {
         const user = json(state.users[key])
         if (!user) return null
         // console.log("muted", user.name, key === state.attrs.id)

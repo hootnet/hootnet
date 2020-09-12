@@ -6,17 +6,43 @@ import PeerConnection from "../PeerConnection";
 
 const actionOps = {
   onReload({ state, actions }) {
+    window.actions = actions
+    window.state = state
     actions.tests._init()
-    actions.setTestWindow('')
-    // actions.tests._parseCommand()
-    // actions.cascade()
-    // actions.openWindow({ name: "window10", spec: "left=200,height=200,width=200" })
-    // actions.openWindow({ name: "window27", spec: "left=600,height=200,width=200" })
+    window.setState = (path, value) => {
+      actions.setState({ path, value })
+    }
+    state.AAA = undefined
+    setState("AAA.b.c", { another: "thing" })
+    if (state.attrs.name === "XXX") {
+      actions.setWarning("this is Mike")
+      actions.setTestWindow('')
+      // actions.exec("all: setWarning 'Ready for a test?'")
+      actions.setCascadeOrder("neale-noel-jess")
+      // actions.exec("all: setCascadeOrder neale-noel-jess")
+      // actions.exec("all: setController mike")
+      // actions.exec("all: createBlobbedStreams")
+      // actions.exec("neale: startTheCascade")
 
-    // actions.tests._setMessage()
-    // actions.tests.clearResults()
-    // // actions.tests._sessionOfName()
-    // actions.tests._setCascadeOrder()
+      // actions.tests._parseCommand()
+      // actions.cascade()
+      // actions.openWindow({ name: "window10", spec: "left=200,height=200,width=200" })
+      // actions.openWindow({ name: "window27", spec: "left=600,height=200,width=200" })
+
+      // actions.tests._setMessage()
+      // actions.tests.clearResults()
+      // // actions.tests._sessionOfName()
+      // actions.tests._setCascadeOrder()
+    }
+  },
+  setState({ state }, { path, value }) {
+    path = path.split(".")
+    let element = state
+    for (let i = 0; i < path.length - 1; i++) {
+      if (element[path[i]] === undefined) element[path[i]] = {}
+      element = element[path[i]]
+    }
+    element[path[path.length - 1]] = value
   },
   allOff({ state }) {
     Object.keys(state.users).map(key => {
@@ -142,13 +168,7 @@ const actionOps = {
     toList.map(to => actions.relayAction({ to, op: 'doAction', data: { action: parse.op, arg: parse.arg } }))
   },
   cascade({ actions }) {
-    actions.exec("all: setWarning 'some  more warning'")
-    // actions.exec("all: setCascadeOrder noel-jess-neale")
-    // actions.exec("mike: makeController")
-    // actions.exec("cascaders: connectCascaders")
-    // actions.exec("cascaders: connectToController")
-    // actions.exec("controller connectToCascaders")
-    // actions.exec("noel: startCascade")
+
   },
   doAction({ actions }, action) {
     if (typeof action !== 'object') {
@@ -220,10 +240,9 @@ const actionOps = {
     effects.socket.actions.relayEffect(to, op, data);
   },
   setCascadeOrder({ state, actions }, order) {
-    const separators = /[\s:,]+/
+    const separators = /[\s:\-,]+/
     const cascaders = order.split(separators)
       .map(name => actions.sessionOfName(name))
-      .filter(item => !item.match(separators))
     state.sessions.cascaders = cascaders
     return cascaders
   },
@@ -436,76 +455,81 @@ const actionOps = {
   //   const id = state.attrs.id;
   //   actions.createCasdadeStream();
   // },
-  createBlobbedCascade({ state }) {
+  createBlobbedStreams({ state }) {
+    //Bail out if this is not part of the cascade
     if (!state.streams.cascaders.includes(state.attrs.id)) return
-    const merger = labeledStream(
-      json(state.streams.localStream),
-      state.attrs.name,
-      state.streams.cascaders.indexOf(state.attrs.id),
-      state.sessions.cascaders.length
-    );
-    state.streams.cascadeMerger = merger;
-    state.streams.cascadeStream = merger.result;
-    if (state.index < state.sessions.cascaders.length - 1) {
-      const sourceConnector = actions.getConnector(state.sessions.cascaders[state.index - 1])
 
-      sourceConnector.onOpenBinaryChannel = () => {
-        const loRezStream = merger.result;
-        blobbedVideo.srcObject = loRezStream;
-        sourceConnector.createDefaultStream(loRezStream);
-        sourceConnector.startDefaultStream();
-      };
-      console.log("RECEIVED", incomingStream);
-      dupVideo.srcObject = sentVideo.captureStream();
+    //set up stream to control
+    const toControlConnector = actions.getConnector(state.sessions.controllers[0])
+    toControlConnector.createDefaultStream(localStream);
+
+    //set up cascading streams
+    const index = state.sessions.cascaders.indexOf(state.attrs.id)
+    const length = state.sessions.cascaders.length
+    const localStream = json(state.streams.localStream)
+    const incomingControlVideo = document.createElement('video')
+    let incomingStream, outboundStream = null
+
+    if (index > 0) {
+      const incomingConnector = actions.getConnector(state.sessions.cascaders[index - 1])
+      incomingConnector.receiveStream(
+        BLOB_CHANNEL,
+        { audio: true, video: true },
+        incomingControlVideo
+      );
+      incomingStream = incomingControlVideo.captureStream()
+      state.streams.incomingStream = incomingStream
     }
-    if (state.index > 0) {
-      const destConnector = actions.getConnector(state.sessions.cascaders[state.index - 1])
-      const sentVideo = document.createElement('video')
-      destConnector.onOpenBinaryChannel = () => {
-        const merger1 = labeledStream(localStream, "test", 2, 4);
-        sentVideo = document.createElement("video");
-        const restreamer = destConnector.receiveStream(
-          BLOB_CHANNEL,
-          { audio: true, video: true },
-          sentVideo
-        );
-        console.log("RECEIVED", restreamer);
-        sentVideo.addEventListener("canplay", () => {
-          merger1.addStream(sentVideo.captureStream(), {
+    if (index < length - 1) {
+      const merger = labeledStream(localStream, state.attrs.name, index, length);
+      outboundStream = merger.result
+      state.streams.cascadeMerger = merger;
+      state.streams.cascadeStream = merger.result;
+      const outboundConnector = actions.getConnector(state.sessions.cascaders[index + 1])
+      outboundConnector.createDefaultStream(outboundStream);
+      if (index !== 0) {
+
+        incomingControlVideo.addEventListener("canplay", () => {
+          merger.addStream(incomingStream, {
             index: -1,
             x: 0, // position of the topleft corner
             y: 0,
             width: merger.width,
             height: merger.height
           });
+          outboundConnector.startDefaultStream();
+          toControlConnector.startDefaultStream();
         });
-        // dupVideo.srcObject = sentVideo.captureStream();
-        // dupVideo.srcObject = merger1.result;
-      };
-
-    };
-
-  },
-  sendStreamToControl({ state }) {
-    const localStream = json(state.streams.localStream)
-    if (state.index) {
-      const sourceConnector = actions.getConnector(state.sessions.cascaders[state.sessions.controllers[0]])
-      sourceConnector.onOpenBinaryChannel = () => {
-        sourceConnector.createDefaultStream(localStream);
-        sourceConnector.startDefaultStream();
-      };
+      }
     }
   },
-  getStreamsInControl({ state }) {
-    state.sessions.cascaders.foEach(cascader => {
-      const destConnector = actions.getConnector(cascader)
-      destConnector.onOpenBinaryChannel = () => {
-        const incomingStream = destConnector.receiveStream(
-          BLOB_CHANNEL,
-          { audio: true, video: true },
-          state.controllerPage.videos[cascader]
-        );
+  startTheCascade({ state, actions }) {
+    const toControlConnector = actions.getConnector(state.sessions.controllers[0])
+    toControlConnector.startDefaultStream()
+    const outboundConnector = actions.getConnector(state.sessions.cascaders[cascaders[1]])
+    outboundConnector.startDefaultStream();
+  },
+  setController({ state, actions }, name) {
+    if (name !== state.attrs.name) {
+      if (state.attrs.control === "control") {
+        state.attrs.control = "member"
+        actions.broadcastUserInfo()
       }
+    } else {
+      state.attrs.control = "control"
+      actions.broadcastUserInfo()
+      actions.computeCategories()
+      actions.setupStreamsInControl()
+    }
+  },
+  setupStreamsInControl({ state }) {
+    state.sessions.cascaders.forEach(cascader => {
+      const destConnector = actions.getConnector(cascader)
+      destConnector.receiveStream(
+        BLOB_CHANNEL,
+        { audio: true, video: true },
+        state.controllerPage.videos[cascader]
+      );
     })
   },
   createCascadeStream({ state }) {
@@ -609,14 +633,14 @@ const actionOps = {
     });
   },
 
-  deleteUserEntry({ state }, id) {
+  deleteUserEntry({ state, actions }, id) {
     actions.clearFaderTimeout(id)
     if (actions.getRemoteStream(id)) {
       actions.deleteRemoteStream(id)
     }
     delete state.users[id]
   },
-  fadeUserEntry({ state }, id) {
+  fadeUserEntry({ state, actions }, id) {
     const user = state.users[id]
     user.opacity = user.opacity - 0.01
     if (user.opacity <= 0) {
@@ -635,6 +659,7 @@ const actionOps = {
     });
     droppedMembers.forEach(member => {
       const user = json(state.users[member])
+      if (!user) return
       if (user.faderTimeOut) return
       state.users[member].faderTimeOut = setTimeout(() => {
         actions.fadeUserEntry(member)
@@ -643,7 +668,7 @@ const actionOps = {
     actions.computeCategories();
   },
   computeCategories({ state, actions }) {
-    let cascaders = [];
+    const cascaders = state.sessions.cascaders ? state.sessions.cascaders : []
     const controllers = [];
     const viewers = [];
     const members = [];
@@ -652,38 +677,29 @@ const actionOps = {
       const user = state.users[key];
       if (!user) return;
       const control = user.control;
-      const seq = parseInt(control, 10);
-      if (seq) {
-        if (!cascaders[seq]) cascaders[seq] = [];
-        cascaders[seq].push(key);
-      } else if (control) {
+      if (control) {
         if (control.toLowerCase() === "control") {
           controllers.push(key);
         } else if (control.toLowerCase() === "director") {
           directors.push(key)
         } else if (control.toLowerCase() === "member") {
-          members.push(key)
+          if (!cascaders.includes(key)) members.push(key)
         } else if (control.toLowerCase() === "viewer") {
           viewers.push(key);
-        } else {
-          console.log("CONTROL iS", control)
-          actions.setMessage(
-            'Control must be a number, or "control" or "member"'
-          );
-
         }
+
       }
     });
-    cascaders = cascaders.flat().filter(a => a);
-    state.allSessions = cascaders.concat(controllers).concat(viewers).concat(members).concat(directors);
+    const allSessions = cascaders.concat(controllers).concat(viewers).concat(members).concat(directors);
     state.sessions = {
       cascaders,
       controllers,
       viewers,
       members,
-      directors
+      directors,
+      allSessions
     };
-    state.index = state.sessions.cascaders.findIndex(e => e === state.attrs.id);
+    // state.index = state.sessions.cascaders.findIndex(e => e === state.attrs.id);
   },
   sendUserInfo({ state, actions }, request) {
     const data = Object.assign(json(state.attrs), request);
@@ -721,7 +737,6 @@ const actionOps = {
     actions.computeCategories();
     actions.clearFaderTimeout(id)
     if (state.attrs.roomStatus === 'joined') actions.connectRoom()
-
 
   },
   setMessage({ state, actions }, value = "default message") {
@@ -770,20 +785,20 @@ const actionOps = {
       });
     }
   },
-  setupStreams({ state, actions }) {
-    // const id = state.attrs.id;
-    if (!state.streams.cascadeStream) {
-      const merger = labeledStream(
-        json(state.streams.localStream),
-        state.attrs.name,
-        state.index,
-        state.sessions.cascaders.length
-      );
-      actions.addStream({ name: "cascadeMerger", stream: merger });
+  // setupStreams({ state, actions }) {
+  //   // const id = state.attrs.id;
+  //   if (!state.streams.cascadeStream) {
+  //     const merger = labeledStream(
+  //       json(state.streams.localStream),
+  //       state.attrs.name,
+  //       state.index,
+  //       state.sessions.cascaders.length
+  //     );
+  //     actions.addStream({ name: "cascadeMerger", stream: merger });
 
-      actions.addStream({ name: "cascadeStream", stream: merger.result });
-    }
-  },
+  //     actions.addStream({ name: "cascadeStream", stream: merger.result });
+  //   }
+  // },
   logEvent({ state }, { evType, message, zargs }) {
     const lastEvent = { evType, message, zargs };
     if (message === "ping" || message === "pong") state.lastEvent = lastEvent;

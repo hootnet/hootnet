@@ -40,7 +40,6 @@ const state = {
     recorder: "hide"
   },
   directorText: "//Enter your code below\n\n\nEND",
-  allSessions: [],
   users: {}, // keyed list of users with their data
   peerEvents: 0,
   _message: {
