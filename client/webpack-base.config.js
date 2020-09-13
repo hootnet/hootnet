@@ -3,12 +3,16 @@ const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
 
 const sharedConfigs = {
   plugins: [
-      new FaviconsWebpackPlugin()
-  ],  
+    new FaviconsWebpackPlugin()
+  ],
   context: __dirname,
   entry: {
     app: './src/index.js',
     looper: './src/looper.js'
+  },
+
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js'],
   },
   module: {
     rules: [
@@ -19,33 +23,39 @@ const sharedConfigs = {
           loader: 'babel-loader',
           options: {
             presets: ['@babel/preset-react', '@babel/preset-env'],
-            plugins:['@babel/plugin-proposal-class-properties']  
-          }   
+            plugins: ['@babel/plugin-proposal-class-properties']
+          }
         }
       },
       {
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
+
+      {
         test: require.resolve('webrtc-adapter'),
         use: 'expose-loader'
-      },              
-      {
-          test: /\.scss$/,
-          use: ["style-loader", "css-loader", "sass-loader"]
       },
       {
-          test: /\.css$/,
-          use: ["style-loader", "css-loader", "postcss-loader"]
+        test: /\.scss$/,
+        use: ["style-loader", "css-loader", "sass-loader"]
       },
       {
-          test: /\.(png|woff|woff2|eot|ttf|svg)$/,
-          use: [
-              {
-                  loader: "file-loader",
-                  options: {
-                      name: "[name].[ext]",
-                      outputPath: "assets"
-                  }
-              }
-          ]
+        test: /\.css$/,
+        use: ["style-loader", "css-loader", "postcss-loader"]
+      },
+      {
+        test: /\.(png|woff|woff2|eot|ttf|svg)$/,
+        use: [
+          {
+            loader: "file-loader",
+            options: {
+              name: "[name].[ext]",
+              outputPath: "assets"
+            }
+          }
+        ]
       }
     ]
   }
