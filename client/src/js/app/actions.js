@@ -1,5 +1,5 @@
 import { json } from "overmind";
-import { toast } from "react-toastify";
+// import { toast } from "react-toastify";
 import labeledStream from "../streamutils/labeledStream";
 import PeerConnection from "../PeerConnection";
 // import VideoStreamMerger from "../streamutils/video-stream-merger";
@@ -12,14 +12,14 @@ const actionOps = {
     window.setState = (path, value) => {
       actions.setState({ path, value })
     }
-    state.AAA = undefined
-    setState("AAA.b.c", { another: "thing" })
-    if (state.attrs.name === "XXX") {
+
+    if (state.attrs.name === "Mike") {
       actions.setWarning("this is Mike")
       actions.setTestWindow('')
       // actions.exec("all: setWarning 'Ready for a test?'")
-      actions.setCascadeOrder("neale-noel-jess")
-      // actions.exec("all: setCascadeOrder neale-noel-jess")
+      // actions.setCascadeOrder("mike-noel")
+      // actions.createBlobbedStreams()
+      // console.log("DONE")
       // actions.exec("all: setController mike")
       // actions.exec("all: createBlobbedStreams")
       // actions.exec("neale: startTheCascade")
@@ -84,7 +84,7 @@ const actionOps = {
     }
 
   },
-  getRemoteStream({ state, actions }, id) {
+  getRemoteStream({ state }, id) {
     if (state.users[id] && state.users[id].remoteStream) {
       return json(state.users[id].remoteStream)
     } else {
@@ -95,7 +95,8 @@ const actionOps = {
     state.users[member].remoteStream = stream
   },
   getConnector({ state }, id) {
-
+    return PeerConnection.PeerConnections[id]
+    // return state.users[id].peerConnection.connector
   },
   setPeerConnection({ state }, { id, pc }) {
     state.users[id].peerConnection = pc
@@ -117,7 +118,7 @@ const actionOps = {
     state.users[id].remoteStream = null
     actions.clearPeerConnection(id)
   },
-  sessionsOfList({ state, actions }, list) {
+  sessionsOfList({ actions }, list) {
     return list.split(',').map(name => actions.sessionOfName(name))
   },
   sessionOfName({ state }, name) {
@@ -126,20 +127,31 @@ const actionOps = {
     if (state.users[name]) return name //return if session number passed in
     const foundSession = Object.keys(state.users).find(session => state.users[session].name.toLowerCase() === name)
     if (foundSession) return foundSession
-    throw new Error("sessionsOfName not defined: " + name)
+    actions.setError(name + " is not in the cascade")
+    return null
   },
   doDemo({ state }) {
-    state.componentStatus.recorderDemo = "show"
+    if (state.currentWindow === "casade") {
+      state.currentWindow = "chat"
+      return
+    }
+    actions.setCascadeOrder("mike-noel")
+    actions.createBlobbedStreams()
+
+    // actions.exec("noel: createBlobbedStreams")
+
+
+    // state.componentStatus.recorderDemo = "show"
   },
 
   setCurrentWindow({ state }, window) {
     state.currentWindow = window
   },
-  openWindow({ state }, { location = window.location, name = "new", spec = "left=200, height=200, width = 200" }) {
+  openWindow({ }, { location = window.location, name = "new", spec = "left=200, height=200, width = 200" }) {
     console.log("OPEN WINDOWS", { location, name, spec })
     window.open(location, name, spec)
   },
-  parseCommand({ actions }, command) {
+  parseCommand({ }, command) {
     const matcher = command.match(/^\s*(\w*)\s*:\s*(\w*)\s*(.*)?$/)
     if (matcher[3] === undefined) return { to: matcher[1], op: matcher[2] }
     const quote = matcher[3].match(/"([^"]*)"/)
@@ -168,7 +180,8 @@ const actionOps = {
     toList.map(to => actions.relayAction({ to, op: 'doAction', data: { action: parse.op, arg: parse.arg } }))
   },
   cascade({ actions }) {
-
+    state.currentWindow = "cascade";
+    actions.startTheCascade()
   },
   doAction({ actions }, action) {
     if (typeof action !== 'object') {
@@ -240,32 +253,16 @@ const actionOps = {
     effects.socket.actions.relayEffect(to, op, data);
   },
   setCascadeOrder({ state, actions }, order) {
+    state.cascadeOrder = order
     const separators = /[\s:\-,]+/
+    state.sessions.cascaders = []
     const cascaders = order.split(separators)
-      .map(name => actions.sessionOfName(name))
+      .map(name => actions.sessionOfName(name)).filter(name => name)
     state.sessions.cascaders = cascaders
     return cascaders
   },
 
-  // startCascade({ state, actions }, spec) {
-  //   console.clear();
-  //   if (state.members.length < 2) {
-  //     actions.setMessage("Can't start a cascade with only you in the room.");
-  //     return;
-  //   }
-  //   actions.startCascaders();
-  //   // actions.startControllers();
-  //   // actions.startViewers();
-  // },
-  // startChat({ state, actions }) {
-  //     state.members.forEach(id => {
-  //         actions.relayAction({
-  //             to: id,
-  //             op: "startChat",
-  //             data: { from: state.attrs.id }
-  //         });
-  //     });
-  // },
+
   endAllStreams({ state, actions }) {
     state.members.forEach(id => {
       actions.relayAction({
@@ -309,7 +306,7 @@ const actionOps = {
     //If not all present, try again in a minute
     if (!allPresent) {
       setTimeout(() => {
-        actions.reconnect()
+        actions.connectRoom()
 
       }, 1000);
       return
@@ -455,38 +452,57 @@ const actionOps = {
   //   const id = state.attrs.id;
   //   actions.createCasdadeStream();
   // },
-  createBlobbedStreams({ state }) {
+  createBlobbedStreams({ state, actions }) {
     //Bail out if this is not part of the cascade
-    if (!state.streams.cascaders.includes(state.attrs.id)) return
 
+    if (!state.sessions.cascaders.includes(state.attrs.id)) return
+    let toControlConnector
     //set up stream to control
-    const toControlConnector = actions.getConnector(state.sessions.controllers[0])
-    toControlConnector.createDefaultStream(localStream);
-
+    if (state.sessions.controllers[0]) {
+      toControlConnector = actions.getConnector(state.sessions.controllers[0])
+      toControlConnector.createDefaultStream(localStream);
+    }
     //set up cascading streams
+
     const index = state.sessions.cascaders.indexOf(state.attrs.id)
     const length = state.sessions.cascaders.length
     const localStream = json(state.streams.localStream)
     const incomingControlVideo = document.createElement('video')
     let incomingStream, outboundStream = null
+    const BLOB_CHANNEL = 'BlobChannel';
 
     if (index > 0) {
-      const incomingConnector = actions.getConnector(state.sessions.cascaders[index - 1])
+      const otherSession = state.sessions.cascaders[index - 1]
+      const incomingConnector = actions.getConnector(otherSession)
       incomingConnector.receiveStream(
         BLOB_CHANNEL,
         { audio: true, video: true },
         incomingControlVideo
       );
+
+      incomingConnector.sendText(
+        `Setting up inbound connection between ${state.attrs.id} and ${otherSession}`
+      );
       incomingStream = incomingControlVideo.captureStream()
-      state.streams.incomingStream = incomingStream
+      state.streams.peerStream = incomingStream
     }
     if (index < length - 1) {
       const merger = labeledStream(localStream, state.attrs.name, index, length);
       outboundStream = merger.result
       state.streams.cascadeMerger = merger;
       state.streams.cascadeStream = merger.result;
-      const outboundConnector = actions.getConnector(state.sessions.cascaders[index + 1])
+      const otherSession = state.sessions.cascaders[index + 1]
+      const outboundConnector = actions.getConnector(otherSession)
+
       outboundConnector.createDefaultStream(outboundStream);
+      PeerConnection.PeerConnections[otherSession].sendText(
+        `Setting up outbound connection between ${state.attrs.id} and ${otherSession}`
+
+      )
+      outboundConnector.sendText(
+        `Setting up outbound connection between ${state.attrs.id} and ${otherSession}`
+      );
+
       if (index !== 0) {
 
         incomingControlVideo.addEventListener("canplay", () => {
@@ -497,17 +513,24 @@ const actionOps = {
             width: merger.width,
             height: merger.height
           });
-          outboundConnector.startDefaultStream();
-          toControlConnector.startDefaultStream();
+          // outboundConnector.startDefaultStream();
+          // toControlConnector.startDefaultStream();
         });
       }
     }
   },
   startTheCascade({ state, actions }) {
-    const toControlConnector = actions.getConnector(state.sessions.controllers[0])
-    toControlConnector.startDefaultStream()
-    const outboundConnector = actions.getConnector(state.sessions.cascaders[cascaders[1]])
-    outboundConnector.startDefaultStream();
+    state.currentWindow = "cascade";
+    if (state.sessions.controllers[0]) {
+      const toControlConnector = actions.getConnector(state.sessions.controllers[0])
+      toControlConnector.startDefaultStream()
+    }
+    if (state.attrs.id === state.sessions.cascaders[0]) {
+      console.log("starting it up")
+      const outboundConnector = actions.getConnector(state.sessions.cascaders[1])
+      outboundConnector.startDefaultStream();
+      outboundConnector.sendText("starting the cascade")
+    }
   },
   setController({ state, actions }, name) {
     if (name !== state.attrs.name) {
@@ -544,7 +567,7 @@ const actionOps = {
       state.streams.cascadeStream = merger.result;
     }
   },
-  endCall({ state, actions }, { isStarter, from }) {
+  endCall({ actions }, { from }) {
     // actions.clearCascade();
     // actions.setRoomStatus('disconnected')
     // if (from === state.attrs.id) return
@@ -578,34 +601,7 @@ const actionOps = {
     // })
 
   },
-  // relayAction({ state, effects }, { to, op, data }) {
-  //     effects.socket.actions.relayEffect(to, op, data)
-  // },
-  // startCascade({ state, actions, effects }) {
-  //     if (state.members.length < 2) {
-  //         actions.setMessage("Can't start a cascade with only you in the room.")
-  //         return
-  //     }
-  //     actions.diag('start cascade')
-  //     let nextMember
-  //     state.sessions.cascaders.slice(0, -1).map((member, sequence) => {
-  //         nextMember = state.sessions.cascaders[sequence + 1]
-  //         actions.relayAction({
-  //             to: member,
-  //             op: "startcall",
-  //             data: { responder: nextMember }
-  //         })
-  //     })
-  //     state.sessions.controllers.map((member, sequence) => {
 
-  //         actions.relayAction({
-  //             to: nextMember,
-  //             op: "startcall",
-  //             data: { responder: member }
-  //         })
-  //         nextMember = member
-  //     })
-  // },
   clearCascade({ state }) {
     console.log("clear cascade")
     state.currentWindow = "chat";
@@ -623,6 +619,7 @@ const actionOps = {
 
   endCascade({ state, actions }) {
     actions.setMessage(`Ending cascade for room '${state.attrs.room}'.`);
+    actions.setCurrentWindow('chat')
     actions.endCall({ from: state.attrs.id })
     state.members.forEach(id => {
       actions.relayAction({
@@ -667,7 +664,14 @@ const actionOps = {
     })
     actions.computeCategories();
   },
-  computeCategories({ state, actions }) {
+  toggleRecorder({ state }) {
+    if (state.componentStatus.recorderDemo === "show") {
+      state.componentStatus.recorderDemo = "hide"
+    } else {
+      state.componentStatus.recorderDemo = "show"
+    }
+  },
+  computeCategories({ state }) {
     const cascaders = state.sessions.cascaders ? state.sessions.cascaders : []
     const controllers = [];
     const viewers = [];

@@ -26,6 +26,13 @@ export default function StreamRecorderDemo() {
       >
         Record Desktop
       </button>
+      <button
+        className="bg-blue-400 m-4 p-2 border border-black border-size-2 border-rounded "
+        id="start"
+        onClick={ actions.toggleRecorder }
+      >
+        Close
+      </button>
       <StreamRecorder autoStart={ false } source={ source } monitor={ true } />
 
     </div>

@@ -1,19 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
 import classnames from 'classnames';
 
 import { useApp } from './app'
 import { json } from 'overmind';
 import UserList from './UserList'
-import { positions } from './streamutils/labeledStream'
+// import { positions } from './streamutils/labeledStream'
 
 const getButtonClass = (icon, enabled) => classnames(`btn-action fa ${icon}`, { disable: !enabled });
 
 function CascadeWindow() {
   //   const peerVideo = useRef(null);
   // const peerVideo = useRef(null);
-  const [video, setVideo] = useState(true);
-  const [audio, setAudio] = useState(true);
+  const [video, setVideo] = React.useState(true);
+  const [audio, setAudio] = React.useState(true);
   const { state, actions } = useApp()
   const peerVideo = React.useRef(null)
   const localVideo = React.useRef(null)
@@ -35,14 +34,14 @@ function CascadeWindow() {
    * @param {String} deviceType - Type of the device eg: Video, Audio
    */
   const toggleMediaDevice = (deviceType) => {
-    // if (deviceType === 'video') {
-    //     setVideo(!video);
-    //     mediaDevice.toggle('Video');
-    // }
-    // if (deviceType === 'audio') {
-    //     setAudio(!audio);
-    //     mediaDevice.toggle('Audio');
-    // }
+    if (deviceType === 'video') {
+      setVideo(!video);
+      mediaDevice.toggle('Video');
+    }
+    if (deviceType === 'audio') {
+      setAudio(!audio);
+      mediaDevice.toggle('Audio');
+    }
   };
 
   React.useEffect(() => {
@@ -64,9 +63,9 @@ function CascadeWindow() {
   return (
     <div className={ classnames('cascade-window') }>
       <div>
-        <video className={ "w-1/2" } ref={ peerVideo } autoPlay />
+        <video className={ "w-1/2" } ref={ peerVideo } muted={ !audio } autoPlay />
         <video className={ "w-1/2" } ref={ localVideo } muted autoPlay />
-      </div>a
+      </div>
       <div className='video-control'>
         <button
           key='btnVideo'

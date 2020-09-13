@@ -89,7 +89,11 @@ class Restreamer {
     this.video.removeAttribute("src"); // empty source
     this.video.load();
     this.handleCallbacks("remove");
-
+    try {
+      setTimeout(() => this.video.load(), 1000)
+    } catch (e) {
+      console.log(e.toString)
+    }
     // this.mediaSource.getTracks().
     this.enabled = false;
   }

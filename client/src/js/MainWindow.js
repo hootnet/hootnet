@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
+// import PropTypes from 'prop-types';
 import { useApp } from './app'
 import { useQueryState } from "use-location-state";
 import UserList from './UserList'
@@ -22,7 +22,7 @@ const useStyles = makeStyles((theme) => ({
     }
   }
 }));
-function MainWindow({ startCall, clientId }) {
+function MainWindow() {
   const classes = useStyles();
 
   const { state, actions } = useApp();
@@ -35,10 +35,10 @@ function MainWindow({ startCall, clientId }) {
    * Start the call with or without video
    * @param {Boolean} video
    */
-  const callWithVideo = (video) => {
-    const config = { audio: true, video };
-    return () => roomID && startCall(true, roomID, config);
-  };
+  // const callWithVideo = (video) => {
+  //   const config = { audio: true, video };
+  //   return () => roomID && startCall(true, roomID, config);
+  // };
 
   const userIdIsValid = () => {
     return !!userID
@@ -106,7 +106,7 @@ function MainWindow({ startCall, clientId }) {
                     type="Button"
                     variant="contained"
                     color="primary"
-                    onClick={ actions.startCascade }
+                    onClick={ actions.startTheCascade }
                   >
                     Cascade
               </Button>
@@ -117,6 +117,14 @@ function MainWindow({ startCall, clientId }) {
                     onClick={ actions.doDemo }
                   >
                     Demo
+               </Button>
+                  <Button
+                    type="Button"
+                    variant="contained"
+                    color="secondary"
+                    onClick={ actions.toggleRecorder }
+                  >
+                    RECORDER
               </Button>
                   <Button
                     style={ { background: "green" } }

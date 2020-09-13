@@ -3,7 +3,7 @@ import Emitter from './Emitter';
 import socket from './socket';
 import { json } from 'overmind';
 import WebRTCConnector from './streamutils/WebRTCConnector';
-
+window.PeerConnections = {}
 import { proxyMethods } from './app';
 const debug = (message) => {
   console.log(message);
@@ -12,6 +12,7 @@ const debug = (message) => {
 const PC_CONFIG = { iceServers: [{ urls: ['stun:stun.l.google.com:19302'] }] };
 
 class PeerConnection extends Emitter {
+  static PeerConnections = []
   /**
    * Create a PeerConnection.
    * @param {String} friendID - ID of the friend you want to call.
@@ -22,8 +23,9 @@ class PeerConnection extends Emitter {
     PeerConnection.instance++;
     // debug(`PeerConnection from ${friendID} to ${opts.id}`)
     this.pc = new RTCPeerConnection(PC_CONFIG);
-
     this.connector = new WebRTCConnector(this.pc, state.attrs.id);
+
+    PeerConnection.PeerConnections[friendID] = this.connector
     this.connector.onOpenTextChannel = (c) => {
       console.log('Text channel open');
       this.connector.sendText(

@@ -50,11 +50,9 @@ const StreamRecorder = ({ stream, autoStart, source, recordingComplete, monitor 
       setInputStream(stream);
       setRecordDisabled(false);
     } else if (source === "local") {
-      debugger
       setInputStream(actions.getStream('localStream'));
       setRecordDisabled(false);
     } else if (source === "desktop") {
-      debugger
       if (actions.getStream('desktop')) {
         setInputStream(actions.getStream('desktop'));
         setRecordDisabled(false);

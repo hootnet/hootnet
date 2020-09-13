@@ -1,4 +1,4 @@
-import labeledStream from './labeledStream';
+// import labeledStream from './labeledStream';
 import Blobber from './Blobber';
 import Restreamer from './Restreamer';
 const BLOB_CHANNEL = 'BlobChannel';
@@ -10,7 +10,7 @@ class WebRTCConnector {
   static getBlobChannelName() {
     return BLOB_CHANNEL;
   }
-  constructor(peer, name, mode) {
+  constructor(peer, name) {
     this.name = name;
     this.peer = peer;
     this.channels = {};
@@ -72,7 +72,7 @@ class WebRTCConnector {
     const restreamer = new Restreamer(sentVideo, configuration);
     restreamer.start();
     this.setRestreamer(name);
-    this.onBlob(async (blob) => {
+    this.onBlob((blob) => {
       // console.log("Got Blob ", blob.constructor.name, blob.size);
       restreamer.addBlob(blob);
     });
@@ -86,17 +86,19 @@ class WebRTCConnector {
     const blobber = new Blobber(stream);
     this.setBlobber(channelName, blobber);
     blobber.onBlob((message) => {
-      // console.log("Blob", message.constructor.name);
+      console.log("Blob", message.constructor.name);
       ch.sendBinaryData(message);
     });
-    ch.onMessage((data) => {
+    ch.onMessage(() => {
       console.log('Stream Message');
     });
   }
   startDefaultStream() {
+    console.log("Start Default stream")
     this.startStream(BLOB_CHANNEL);
   }
   startStream(channelName) {
+    console.log("Start A stream")
     const blobber = this.getBlobber(channelName);
     blobber.start(60);
   }
@@ -155,11 +157,12 @@ class ChannelHandler {
     this.dataChannel.addEventListener('open', this.awaitOpen.bind(this));
     this.dataChannel.addEventListener('close', this.awaitClose.bind(this));
   }
-  awaitClose(event) {
+  //eslint-disable-next-line
+  awaitClose() { //eslint-disable-line
     // console.log("PC1 Remote close");
     this.sendFunction = null;
   }
-  awaitOpen(event) {
+  awaitOpen() {//eslint-disable-line
     // console.log(this.name, "Remote open");
     this.channel.addEventListener('message', this.awaitMesage.bind(this));
     this.dataChannel.addEventListener('message', this.awaitDCMesage.bind(this));

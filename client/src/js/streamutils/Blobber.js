@@ -51,6 +51,7 @@ class Blobber {
     console.log("Recorded Blobs: ", this.blobs);
   }
   handleDataAvailable(event) {
+    console.log("data available")
     if (event.data && event.data.size > 0) {
       this.getStat("firstBlob");
       this.index++;
