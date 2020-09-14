@@ -8,7 +8,7 @@ import effects from './effects';
 import state from './state';
 import { proxyMethods, setProxyActions } from './proxyMethods';
 import tests from "./tests"
-import resources from "./resources"
+import _resources from "./resources"
 
 export { proxyMethods };
 
@@ -45,7 +45,7 @@ export let useApp;
 
 const initialize = () => {
   app = createOvermind(merge(config,
-    namespaced({ tests, resources })), {
+    namespaced({ tests, _resources })), {
     devtools: navigator.userAgent.match(/ CrOS /)
       ? 'penguin.linux.test:3031'
       : 'localhost:3031'

@@ -6,9 +6,10 @@ blobber.start(interval) //start the process
 blobber.stop() // stop capturing blobs
 
 */
-
+import { app } from '../app'
 class Blobber {
   constructor(stream) {
+    app._resources.created("blobber")
     this.stats = {
       constructed: null,
       created: null,
@@ -27,7 +28,7 @@ class Blobber {
   }
   displayStats() {
     console.log("BLOBBER STATS");
-    let base = this.stats.constructed;
+    let base = this.stats.constructed;// tslint:disable-line
     let blobBase = this.stats.started;
     for (let key in this.stats) {
       if (key.match(/^blob/)) {

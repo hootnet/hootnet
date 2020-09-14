@@ -3,13 +3,22 @@ import { json } from "overmind";
 import labeledStream from "../streamutils/labeledStream";
 import PeerConnection from "../PeerConnection";
 // import VideoStreamMerger from "../streamutils/video-stream-merger";
+import { Action } from "overmind";
 
+type Window = {
+  actions: { [name: string]: any };
+  state: { [name: string]: any };
+  setState: (path: string, value: any) => void;
+  location: any;
+  open: (url: string, name?: string, specs?: string) => any;
+}
+let myWindow: Window = <any>window
 const actionOps = {
   onReload({ state, actions }) {
-    window.actions = actions
-    window.state = state
+    myWindow.actions = actions
+    myWindow.state = state
     actions.tests._init()
-    window.setState = (path, value) => {
+    myWindow.setState = (path, value) => {
       actions.setState({ path, value })
     }
 
@@ -35,14 +44,15 @@ const actionOps = {
       // actions.tests._setCascadeOrder()
     }
   },
-  setState({ state }, { path, value }) {
-    path = path.split(".")
+  setState({ state }, { pathString, value }: { pathString: string, value: string }): void {
+    const path: Array<string> = pathString.split(".")
     let element = state
     for (let i = 0; i < path.length - 1; i++) {
       if (element[path[i]] === undefined) element[path[i]] = {}
       element = element[path[i]]
     }
     element[path[path.length - 1]] = value
+
   },
   allOff({ state }) {
     Object.keys(state.users).map(key => {
@@ -121,7 +131,7 @@ const actionOps = {
   sessionsOfList({ actions }, list) {
     return list.split(',').map(name => actions.sessionOfName(name))
   },
-  sessionOfName({ state }, name) {
+  sessionOfName({ state, actions }, name) {
     // console.log("TRANSLATE", name)
     name = name.toLowerCase()
     if (state.users[name]) return name //return if session number passed in
@@ -130,7 +140,7 @@ const actionOps = {
     actions.setError(name + " is not in the cascade")
     return null
   },
-  doDemo({ state }) {
+  doDemo({ actions, state }) {
     if (state.currentWindow === "casade") {
       state.currentWindow = "chat"
       return
@@ -147,7 +157,7 @@ const actionOps = {
   setCurrentWindow({ state }, window) {
     state.currentWindow = window
   },
-  openWindow({ }, { location = window.location, name = "new", spec = "left=200, height=200, width = 200" }) {
+  openWindow({ }, { location = <any>window.location, name = "new", spec = "left=200, height=200, width = 200" }) {
     console.log("OPEN WINDOWS", { location, name, spec })
     window.open(location, name, spec)
   },
@@ -179,7 +189,7 @@ const actionOps = {
     const toList = actions.processTo(parse.to)
     toList.map(to => actions.relayAction({ to, op: 'doAction', data: { action: parse.op, arg: parse.arg } }))
   },
-  cascade({ actions }) {
+  cascade({ state, actions }) {
     state.currentWindow = "cascade";
     actions.startTheCascade()
   },
@@ -293,8 +303,8 @@ const actionOps = {
   },
   connectRoom({ state, actions }) {
     if (!state.streams.localStream) {
-      diag("local stream not running when trying to connect")
-      setTimeout(connectRoom, 1000)
+      actions.diag("local stream not running when trying to connect")
+      setTimeout(actions.connectRoom, 1000)
     }
     let allPresent = true
     state.members.map((member) => {
@@ -306,6 +316,7 @@ const actionOps = {
     //If not all present, try again in a minute
     if (!allPresent) {
       setTimeout(() => {
+        actions.diag("not all present for connect room")
         actions.connectRoom()
 
       }, 1000);
@@ -454,6 +465,7 @@ const actionOps = {
   // },
   createBlobbedStreams({ state, actions }) {
     //Bail out if this is not part of the cascade
+    const localStream = json(state.streams.localStream)
 
     if (!state.sessions.cascaders.includes(state.attrs.id)) return
     let toControlConnector
@@ -466,7 +478,6 @@ const actionOps = {
 
     const index = state.sessions.cascaders.indexOf(state.attrs.id)
     const length = state.sessions.cascaders.length
-    const localStream = json(state.streams.localStream)
     const incomingControlVideo = document.createElement('video')
     let incomingStream, outboundStream = null
     const BLOB_CHANNEL = 'BlobChannel';
@@ -480,10 +491,15 @@ const actionOps = {
         incomingControlVideo
       );
 
+      interface SpecialMediaElement {
+
+        captureStream(frameRate?: number): MediaStream;
+      }
       incomingConnector.sendText(
         `Setting up inbound connection between ${state.attrs.id} and ${otherSession}`
       );
-      incomingStream = incomingControlVideo.captureStream()
+      // ts-ignore: -line
+      incomingStream = (<any>incomingControlVideo).captureStream()
       state.streams.peerStream = incomingStream
     }
     if (index < length - 1) {
@@ -545,9 +561,11 @@ const actionOps = {
       actions.setupStreamsInControl()
     }
   },
-  setupStreamsInControl({ state }) {
+  setupStreamsInControl({ actions, state }) {
     state.sessions.cascaders.forEach(cascader => {
       const destConnector = actions.getConnector(cascader)
+      const BLOB_CHANNEL = 'BlobChannel';
+
       destConnector.receiveStream(
         BLOB_CHANNEL,
         { audio: true, video: true },
@@ -732,7 +750,10 @@ const actionOps = {
     const id = data.id;
     delete data.id;
     // console.log("got user info for ", id)
-    if (!state.users[id]) state.users[id] = {};
+    if (!state.users[id]) {
+      actions._resources.created("user")
+      state.users[id] = {}
+    };
 
     for (const key in data) {
       state.users[id][key] = data[key];

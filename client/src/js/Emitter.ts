@@ -1,11 +1,12 @@
 import _ from 'lodash';
 
 class Emitter {
+  events: { [name: string]: [any?] }
   constructor() {
     this.events = {};
   }
 
-  emit(event, ...args) {
+  emit(event: string, ...args: any) {
     if (this.events[event]) {
       this.events[event].forEach((fn) => fn(...args));
     }
@@ -18,14 +19,13 @@ class Emitter {
     return this;
   }
 
-  off(event, fn) {
+  off(event: string, fn) {
     if (event && _.isFunction(fn)) {
       const listeners = this.events[event];
       const index = listeners.findIndex((_fn) => _fn === fn);
       listeners.splice(index, 1);
-    } else this.events[event] = [];
+    } else this.events[event] = [fn];
     return this;
   }
 }
-
-export default Emitter;
+export default Emitter
