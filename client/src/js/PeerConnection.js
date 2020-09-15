@@ -7,7 +7,7 @@ window.PeerConnections = {}
 // @ts-ignore app is declared and not used
 import { app } from './app';
 const PC_CONFIG = { iceServers: [{ urls: ['stun:stun.l.google.com:19302'] }] };
-
+console.log("Module is reloaded")
 class PeerConnection extends Emitter {
   static PeerConnections = {}
   /**
@@ -149,5 +149,17 @@ class PeerConnection extends Emitter {
     return this;
   }
 }
-
+console.log("PEER CONNECTIONS Diag", PeerConnection.PeerConnections)
 export default PeerConnection;
+if (!module.hot) {
+  console.log('Peer Connection not hot');
+} else {
+  module.hot.dispose((data) => {
+    data.saveConnections = PeerConnection.PeerConnections
+    console.log("saving ", data.saveConnections)
+  });
+  if (module.hot.data) {
+    console.log("restoring stuff ", module.hot.data.saveConnections)
+    PeerConnection.PeerConnections = module.hot.data.saveConnections
+  }
+}

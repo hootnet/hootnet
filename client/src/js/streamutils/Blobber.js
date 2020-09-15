@@ -9,7 +9,7 @@ blobber.stop() // stop capturing blobs
 import { app } from '../app'
 class Blobber {
   constructor(stream) {
-    app._resources.created("blobber")
+    app.actions._resources.created("blobber")
     this.stats = {
       constructed: null,
       created: null,

@@ -1,4 +1,4 @@
-import { json } from "overmind";
+import { json, action } from "overmind";
 // import { toast } from "react-toastify";
 import labeledStream from "../streamutils/labeledStream";
 import PeerConnection from "../PeerConnection";
@@ -35,10 +35,10 @@ const actionOps = {
     }
 
     if (state.attrs.name === "Mike") {
-      actions.setWarning("this is Mike")
-      actions.setTestWindow('cascade')
+      actions.setWarning("this is Mike's session")
+      actions.setCascadeOrder("mike-noel")
+      actions.setTestWindow('')
       // actions.exec("all: setWarning 'Ready for a test?'")
-      // actions.setCascadeOrder("mike-noel")
       // actions.prepareTheCascade()
       // console.log("DONE")
       // actions.exec("all: setController mike")
@@ -475,9 +475,8 @@ const actionOps = {
   //   const id = state.attrs.id;
   //   actions.createCasdadeStream();
   // },
-  prepareTheController({ state, actions }) {
-    if (!state.sessions.controllers.includes(state.attrs.id)) return
-
+  isControllerRegistered({ state }) {
+    return state.sessions.controllers.length > 0
   },
   stutdownTheCascade({ state, actions }) {
     if (state.sessions.controllers[0]) {
@@ -524,10 +523,13 @@ const actionOps = {
 
   prepareTheCascade({ state, actions }) {
     //Bail out if this is not part of the cascade
+    // debugger
+    if (state.sessions.cascaders.length < 2) {
+      actions.setError("cascade has not been set up")
+    }
     if (!actions.isCascader()) return
     const localStream = json(state.streams.localStream)
 
-    let toControllerConnector = actions.getControllerConnection()
     //set up stream to control
     if (actions.isControllerRegistered()) {
       actions.getControllerConnector()
@@ -581,7 +583,9 @@ const actionOps = {
           actions.incomingCanPlay()
           outboundConnector.startDefaultStream();
           outboundConnector.sendText("starting the cascade")
-          toControllerConnector.startDefaultStream()
+          if (actions.isControllerRegistered()) {
+            actions.getContrllerConnector.startDefaultStream()
+          }
           merger.addStream(incomingStream, {
             index: -1,
             x: 0, // position of the topleft corner
@@ -592,7 +596,9 @@ const actionOps = {
           incomingControlVideo.addEventListener("ended", () => {
             outboundConnector.stopDefaultStream();
             outboundConnector.sendText("stupping the cascade")
-            toControllerConnector.stopDefaultStream()
+            if (actions.isControllerRegistered()) {
+              actions.getControllerConnector().stopDefaultStream()
+            }
           })
         });
       }
@@ -623,8 +629,8 @@ const actionOps = {
   isLastCascader({ state, actions }) {
     return state.attrs.id === state.sessions.cascaders[state.sessions.cascaders.length - 1]
   },
-  isControllerRegistered({ state }) {
-    return state.sessions.controllers[0]
+  isController({ state }) {
+    return state.sessions.controllers.includes(state.attrs.id)
   },
   startTheCascade({ state, actions }) {
     if (state.sessions.controllers[0]) {

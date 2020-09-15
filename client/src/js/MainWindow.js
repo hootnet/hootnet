@@ -106,10 +106,10 @@ function MainWindow() {
                     type="Button"
                     variant="contained"
                     color="primary"
-                    onClick={ actions.startTheCascade }
+                    onClick={ actions.prepareTheCascade }
                   >
                     Cascade
-              </Button>
+              {/* </Button>
                   <Button
                     type="Button"
                     variant="contained"
@@ -117,24 +117,24 @@ function MainWindow() {
                     onClick={ actions.doDemo }
                   >
                     Demo
-               </Button>
-                  <Button
-                    type="Button"
-                    variant="contained"
-                    color="secondary"
-                    onClick={ actions.toggleRecorder }
-                  >
-                    RECORDER
-              </Button>
-                  <Button
-                    style={ { background: "green" } }
-                    className="bg-green-600 text-black p-2"
-                    // type="Button"
-                    variant="contained"
-                    onClick={ actions.openWindow }
-                  >
-                    Open
-              </Button>
+               </Button> */}
+                    {/* <Button
+                      type="Button"
+                      variant="contained"
+                      color="secondary"
+                      onClick={ actions.toggleRecorder }
+                    >
+                      RECORDER */}
+                  </Button>
+                  {/* <Button
+                      style={ { background: "green" } }
+                      className="bg-green-600 text-black p-2"
+                      // type="Button"
+                      variant="contained"
+                      onClick={ actions.openWindow }
+                    >
+                      Open
+                </Button> */}
 
                 </div>
                 <br />
