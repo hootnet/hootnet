@@ -7,9 +7,9 @@ import UserList from './UserList'
 // import { positions } from './streamutils/labeledStream'
 
 const getButtonClass = (icon, enabled) => classnames(`btn-action fa ${icon}`, { disable: !enabled });
-
+const getButtonClass1 = (icon, color, disabled) => `fa m-2 text-white bg-${color}-500  h-12 w-12 text-4xl rounded-full ${icon} ${disabled ? "opacity-50" : ''}`
 function CascadeWindow() {
-  //   const peerVideo = useRef(null);
+  //   const peerVideo = useRef(null);  
   // const peerVideo = useRef(null);
   const [video, setVideo] = React.useState(true);
   const [audio, setAudio] = React.useState(true);
@@ -36,11 +36,13 @@ function CascadeWindow() {
   const toggleMediaDevice = (deviceType) => {
     if (deviceType === 'video') {
       setVideo(!video);
-      mediaDevice.toggle('Video');
+      setVideo(true)
+      actions.setWarning("this will  turn off video ")
+      // mediaDevice.toggle('Video');
     }
     if (deviceType === 'audio') {
       setAudio(!audio);
-      mediaDevice.toggle('Audio');
+      // mediaDevice.toggle('Audio');
     }
   };
 
@@ -61,45 +63,43 @@ function CascadeWindow() {
 
 
   return (
-    <div className={ classnames('cascade-window') }>
-      <div>
-        <video className={ "w-1/2" } ref={ peerVideo } muted={ !audio } autoPlay />
-        <video className={ "w-1/2" } ref={ localVideo } muted autoPlay />
+    <div >
+      <div className={ "flex flex-col justify-center" }>
+        <video className={ "" } ref={ peerVideo } muted={ !audio } autoPlay />
+        <video className={ "" } ref={ localVideo } muted autoPlay />
       </div>
-      <div className='video-control'>
+      <div className='video-control flex justify-center'>
         <button
           key='btnVideo'
           type='button'
-          className={ getButtonClass('fa-video-camera', video) }
+          className={ getButtonClass1('fa-video', 'blue', !video) }
           onClick={ () => toggleMediaDevice('video') }
         />
-        <button
-          key='btnAudio'
-          type='button'
-          className={ getButtonClass('fa-microphone', audio) }
-          onClick={ () => toggleMediaDevice('audio') }
-        />
+
         <button
           type='button'
-          className='btn-action hangup fa fa-phone'
+          disabled={ state.streamInProgress }
+          className={ getButtonClass1('fa-play-circle', 'green', state.streamInProgress) }
           onClick={ () => {
-            actions.endCascade();
+            actions.setStreamInProgress(true)
+            actions.setWarning('this will start the cascade stream')
+          } }
+        />
+
+        <button
+          type='button'
+          className={ getButtonClass1('fa-stop-circle', 'red', !state.streamInProgress) }
+          disabled={ !state.streamInProgress }
+          onClick={ () => {
+            actions.setStreamInProgress(false)
+
+            // actions.endCascade();
+            actions.setWarning('this will end the cascade stream')
           } }
         />
 
       </div>
-      { state.attrs.id !== state.sessions.cascaders[0] ?
-        <div className="inline-block ml-10">
-          <button
-            type='button'
-            className='w-12 h-12 bg-green-400 fa fa-check-circle'
-            onClick={ () => {
-              actions.toggleReady();
-            } }
-          />
-        </div>
-        :
-        <UserList /> }
+
     </div>
   );
 }

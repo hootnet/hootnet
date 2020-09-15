@@ -97,6 +97,10 @@ class WebRTCConnector {
     console.log("Start Default stream")
     this.startStream(BLOB_CHANNEL);
   }
+  stopDefaultStream() {
+    console.log("Stop Default stream")
+    this.stopStream(BLOB_CHANNEL);
+  }
   startStream(channelName) {
     console.log("Start A stream")
     const blobber = this.getBlobber(channelName);

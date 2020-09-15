@@ -4,6 +4,9 @@ import labeledStream from "../streamutils/labeledStream";
 import PeerConnection from "../PeerConnection";
 // import VideoStreamMerger from "../streamutils/video-stream-merger";
 import { Action } from "overmind";
+import { string } from "prop-types";
+
+type SessionID = string;
 
 type Window = {
   actions: { [name: string]: any };
@@ -14,7 +17,16 @@ type Window = {
 }
 let myWindow: Window = <any>window
 const actionOps = {
+  setStreamInProgress({ state }, value) {
+    if (value === undefined) {
+      state.streamInProgress = !state.streamInProgress
+    } else {
+      state.streamInProgress = value
+    }
+  },
+
   onReload({ state, actions }) {
+    console.log("Reloading")
     myWindow.actions = actions
     myWindow.state = state
     actions.tests._init()
@@ -24,13 +36,13 @@ const actionOps = {
 
     if (state.attrs.name === "Mike") {
       actions.setWarning("this is Mike")
-      actions.setTestWindow('')
+      actions.setTestWindow('cascade')
       // actions.exec("all: setWarning 'Ready for a test?'")
       // actions.setCascadeOrder("mike-noel")
-      // actions.createBlobbedStreams()
+      // actions.prepareTheCascade()
       // console.log("DONE")
       // actions.exec("all: setController mike")
-      // actions.exec("all: createBlobbedStreams")
+      // actions.exec("all: prepareTheCascade")
       // actions.exec("neale: startTheCascade")
 
       // actions.tests._parseCommand()
@@ -146,9 +158,9 @@ const actionOps = {
       return
     }
     actions.setCascadeOrder("mike-noel")
-    actions.createBlobbedStreams()
+    actions.prepareTheCascade()
 
-    // actions.exec("noel: createBlobbedStreams")
+    // actions.exec("noel: prepareTheCascade")
 
 
     // state.componentStatus.recorderDemo = "show"
@@ -463,29 +475,73 @@ const actionOps = {
   //   const id = state.attrs.id;
   //   actions.createCasdadeStream();
   // },
-  createBlobbedStreams({ state, actions }) {
+  prepareTheController({ state, actions }) {
+    if (!state.sessions.controllers.includes(state.attrs.id)) return
+
+  },
+  stutdownTheCascade({ state, actions }) {
+    if (state.sessions.controllers[0]) {
+      const toControllerConnector = actions.getConnector(state.sessions.controllers[0])
+      //shut down the default stream
+    }
+    const index = state.sessions.cascaders.indexOf(state.attrs.id)
+    if (index > 0) {
+      const otherSession = state.sessions.cascaders[index - 1]
+      const incomingConnector = actions.getConnector(otherSession)
+      const incomingControlVideo = incomingConnector.getControlVideo()
+      incomingControlVideo.removeEventListener("canplay")
+      incomingControlVideo.removeEventListener("stopped")
+    }
+    if (index < length - 1) {
+      const otherSession = state.sessions.cascaders[index + 1]
+      const outboundConnector = actions.getConnector(otherSession)
+    }
+  },
+  getControllerConnector({ state, actions }) {
+    if (state.sessions.controllers[0]) {
+      return actions.getConnector(state.sessions.controllers[0])
+    }
+    return null
+  },
+
+  getOutboundConnector({ state, actions }) {
+    const index = state.sessions.cascaders.indexOf(state.attrs.id)
+    const length = state.sessions.cascaders.length
+    if (index < length - 1) {
+      const otherSession = state.sessions.cascaders[index + 1]
+      return actions.getConnector(otherSession)
+    }
+    return null
+  },
+  getInboundConnector({ state, actions }) {
+    const index = state.sessions.cascaders.indexOf(state.attrs.id)
+    if (index > 0) {
+      const otherSession = state.sessions.cascaders[index - 1]
+      return actions.getConnector(otherSession)
+    }
+    return null
+  },
+
+  prepareTheCascade({ state, actions }) {
     //Bail out if this is not part of the cascade
+    if (!actions.isCascader()) return
     const localStream = json(state.streams.localStream)
 
-    if (!state.sessions.cascaders.includes(state.attrs.id)) return
-    let toControlConnector
+    let toControllerConnector = actions.getControllerConnection()
     //set up stream to control
-    if (state.sessions.controllers[0]) {
-      toControlConnector = actions.getConnector(state.sessions.controllers[0])
-      toControlConnector.createDefaultStream(localStream);
+    if (actions.isControllerRegistered()) {
+      actions.getControllerConnector()
+        .createDefaultStream(localStream);
     }
     //set up cascading streams
 
-    const index = state.sessions.cascaders.indexOf(state.attrs.id)
-    const length = state.sessions.cascaders.length
     const incomingControlVideo = document.createElement('video')
     let incomingStream, outboundStream = null
     const BLOB_CHANNEL = 'BlobChannel';
 
-    if (index > 0) {
-      const otherSession = state.sessions.cascaders[index - 1]
-      const incomingConnector = actions.getConnector(otherSession)
-      incomingConnector.receiveStream(
+    if (!actions.isFirstCascader()) {
+      const inboundConnector = actions.getInboundConnector()
+      inboundConnector.receiveStream(
         BLOB_CHANNEL,
         { audio: true, video: true },
         incomingControlVideo
@@ -495,33 +551,37 @@ const actionOps = {
 
         captureStream(frameRate?: number): MediaStream;
       }
-      incomingConnector.sendText(
-        `Setting up inbound connection between ${state.attrs.id} and ${otherSession}`
+      inboundConnector.sendText(
+        `Setting up inbound connection between ${state.attrs.id} and ${actions.getPreviousCascader()}`
       );
-      // ts-ignore: -line
+      // ts-ignore:
       incomingStream = (<any>incomingControlVideo).captureStream()
       state.streams.peerStream = incomingStream
     }
-    if (index < length - 1) {
-      const merger = labeledStream(localStream, state.attrs.name, index, length);
+    if (!actions.isLastCascader()) {
+
+      const outboundConnector = actions.getOutboundConnector()
+      const merger = labeledStream(localStream, state.attrs.name, actions.getCascaderIndex(), length);
       outboundStream = merger.result
       state.streams.cascadeMerger = merger;
       state.streams.cascadeStream = merger.result;
-      const otherSession = state.sessions.cascaders[index + 1]
-      const outboundConnector = actions.getConnector(otherSession)
 
       outboundConnector.createDefaultStream(outboundStream);
-      PeerConnection.PeerConnections[otherSession].sendText(
-        `Setting up outbound connection between ${state.attrs.id} and ${otherSession}`
+      // PeerConnection.PeerConnections[otherSession].sendText(
+      //   `Setting up outbound connection between ${state.attrs.id} and ${otherSession}`
 
-      )
-      outboundConnector.sendText(
-        `Setting up outbound connection between ${state.attrs.id} and ${otherSession}`
-      );
+      // )
+      // outboundConnector.sendText(
+      //   `Setting up outbound connection between ${state.attrs.id} and ${otherSession}`
+      // );
 
-      if (index !== 0) {
-
+      if (!actions.isFirstCascader()) {
+        //ended, stalled
         incomingControlVideo.addEventListener("canplay", () => {
+          actions.incomingCanPlay()
+          outboundConnector.startDefaultStream();
+          outboundConnector.sendText("starting the cascade")
+          toControllerConnector.startDefaultStream()
           merger.addStream(incomingStream, {
             index: -1,
             x: 0, // position of the topleft corner
@@ -529,23 +589,63 @@ const actionOps = {
             width: merger.width,
             height: merger.height
           });
-          // outboundConnector.startDefaultStream();
-          // toControlConnector.startDefaultStream();
+          incomingControlVideo.addEventListener("ended", () => {
+            outboundConnector.stopDefaultStream();
+            outboundConnector.sendText("stupping the cascade")
+            toControllerConnector.stopDefaultStream()
+          })
         });
       }
     }
+    state.currentWindow = "cascade";
+  },
+  getCascaderIndex({ state }) {
+    return state.sessions.cascaders.indexOf(state.attrs.id)
+  },
+  getPreviousCascader({ state }) {
+    const index = state.sessions.cascaders.indexOf(state.attrs.id)
+
+    return state.sessions.cascaders[index - 1]
+  },
+  getNextCascader({ state }) {
+    const index = state.sessions.cascaders.indexOf(state.attrs.id)
+    return state.sessions.cascaders[index + 1]
+  },
+  isCascader({ state }) {
+    return state.sessions.cascaders.includes(state.attrs.id)
+  },
+  isFirstCascader({ state }) {
+    return state.attrs.id === state.sessions.cascaders[0]
+  },
+  lastCascader({ state }) {
+    return state.sessions.cascaders[state.sessions.cascaders.length - 1]
+  },
+  isLastCascader({ state, actions }) {
+    return state.attrs.id === state.sessions.cascaders[state.sessions.cascaders.length - 1]
+  },
+  isControllerRegistered({ state }) {
+    return state.sessions.controllers[0]
   },
   startTheCascade({ state, actions }) {
-    state.currentWindow = "cascade";
     if (state.sessions.controllers[0]) {
-      const toControlConnector = actions.getConnector(state.sessions.controllers[0])
-      toControlConnector.startDefaultStream()
+      const toControllerConnector = actions.getConnector(state.sessions.controllers[0])
+      toControllerConnector.startDefaultStream()
     }
     if (state.attrs.id === state.sessions.cascaders[0]) {
       console.log("starting it up")
       const outboundConnector = actions.getConnector(state.sessions.cascaders[1])
       outboundConnector.startDefaultStream();
       outboundConnector.sendText("starting the cascade")
+    }
+  },
+  endTheCascade({ state, actions }) {
+    if (!actions.isControllerRegistered()) {
+      actions.getControllerConnector()
+        .stopDefaultStream()
+    }
+    if (!actions.isLastCascader()) {
+      actions.getOutboundConnector()
+        .stopDefaultStream()
     }
   },
   setController({ state, actions }, name) {

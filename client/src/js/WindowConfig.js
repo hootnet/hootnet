@@ -12,6 +12,8 @@ import Message from "./components/Message";
 import Video from "./components/Video";
 import VideoTile from "./VideoTile";
 import VideoTiles from "./VideoTiles";
+import HeaderWindow from "./HeaderWindow";
+
 
 
 
@@ -36,6 +38,8 @@ const WindowConfig = ({ startCallHandler }) => {
         return <CascadeWindow />;
       case 'control':
         return <ControlRoomWindow />;
+      case 'header':
+        return <HeaderWindow />;
       case 'director':
         return <DirectorPage />;
       case 'video':
