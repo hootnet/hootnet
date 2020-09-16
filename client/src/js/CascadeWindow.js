@@ -51,6 +51,12 @@ function CascadeWindow() {
     if (peerVideo && peerVideo.current && stream) {
       // console.log('Using The Effect',  stream)
       peerVideo.current.srcObject = stream
+      "pause.stalled,ended,suspend,waiting,canplay".split(',').forEach(event => {
+        peerVideo.current.addEventListener(event, () => {
+          console.log("peervideo event", event)
+        })
+      })
+
     }
   }, [state.streams.peerStream, peerVideo])
   React.useEffect(() => {
@@ -82,7 +88,7 @@ function CascadeWindow() {
           className={ getButtonClass1('fa-play-circle', 'green', state.streamInProgress) }
           onClick={ () => {
             actions.setStreamInProgress(true)
-            actions.setWarning('this will start the cascade stream')
+            actions.startTheCascade()
           } }
         />
 
@@ -93,8 +99,8 @@ function CascadeWindow() {
           onClick={ () => {
             actions.setStreamInProgress(false)
 
-            // actions.endCascade();
-            actions.setWarning('this will end the cascade stream')
+            actions.stopTheCascade();
+            // actions.setWarning('this will end the cascade stream')
           } }
         />
 

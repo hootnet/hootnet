@@ -106,36 +106,15 @@ function MainWindow() {
                     type="Button"
                     variant="contained"
                     color="primary"
-                    onClick={ actions.prepareTheCascade }
-                  // onClick={ () => actions.exec("all: prepareTheCascade") }
+                    onClick={ () => {
+                      actions.exec("all:setCascadeOrder mike-noel")
+                      // actions.prepareTheCascade()//
+                      actions.exec("all: prepareTheCascade")
+                    } }
                   >
                     Cascade
-              {/* </Button>
-                  <Button
-                    type="Button"
-                    variant="contained"
-                    color="secondary"
-                    onClick={ actions.doDemo }
-                  >
-                    Demo
-               </Button> */}
-                    {/* <Button
-                      type="Button"
-                      variant="contained"
-                      color="secondary"
-                      onClick={ actions.toggleRecorder }
-                    >
-                      RECORDER */}
-                  </Button>
-                  {/* <Button
-                      style={ { background: "green" } }
-                      className="bg-green-600 text-black p-2"
-                      // type="Button"
-                      variant="contained"
-                      onClick={ actions.openWindow }
-                    >
-                      Open
-                </Button> */}
+                    </Button>
+
 
                 </div>
                 <br />
@@ -170,6 +149,32 @@ function MainWindow() {
                   >
                     Change
               </Button>
+
+                  {/* </Button>
+                  <Button
+                    type="Button"
+                    variant="contained"
+                    color="secondary"
+                    onClick={ actions.doDemo }
+                  >
+                    Demo
+               </Button> */}
+                  {/* <Button
+                      type="Button"
+                      variant="contained"
+                      color="secondary"
+                      onClick={ actions.toggleRecorder }
+                    >
+                      RECORDER */}
+                  {/* <Button
+                      style={ { background: "green" } }
+                      className="bg-green-600 text-black p-2"
+                      // type="Button"
+                      variant="contained"
+                      onClick={ actions.openWindow }
+                    >
+                      Open
+                </Button> */}
                 </div>
                 <div className="m-2"></div>
                 { state.changeMedia ? <MediaSelector /> : <UserList /> }

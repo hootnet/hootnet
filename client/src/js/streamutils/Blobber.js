@@ -3,7 +3,7 @@ Blobber turns a stream into a series of blobs
 const blobber = new StreamBlobber(strream)
 blobber.onBlob(cb) //callback functoin for each blob
 blobber.start(interval) //start the process
-blobber.stop() // stop capturing blobs
+blobber.stopBlobber() // stop capturing blobs
 
 */
 import { app } from '../app'
@@ -102,7 +102,7 @@ class Blobber {
       console.log(Error, e.toString());
     }
   }
-  stop() {
+  stopBlobber() {
     this.displayStats();
     this.onblob = null;
     if (this.mediaRecorder && this.mediaRecorder.state !== "inactive")

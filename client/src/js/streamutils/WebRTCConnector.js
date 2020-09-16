@@ -68,6 +68,15 @@ class WebRTCConnector {
   setRestreamer(name, restreamer) {
     this.channels[name].restreamer = restreamer;
   }
+  receiveDefaultStream() {
+    const controlVideo = document.createElement('video')
+    receiveStream(BLOB_CHANNEL,
+      { audio: true, video: true },
+      controlVideo
+    )
+    // incomingStream = (<any>incomingControlVideo).captureStream()
+    return controlVideo.captureStream()
+  }
   receiveStream(name, configuration, sentVideo) {
     const restreamer = new Restreamer(sentVideo, configuration);
     restreamer.start();
@@ -109,12 +118,12 @@ class WebRTCConnector {
   stopStream(channelName) {
     if (this.getBlobber(channelName)) {
       const blobber = this.getBlobber(channelName);
-      blobber.stop();
+      blobber.stopBlobber();
       this.setBlobber(channelName, null);
     }
     if (this.getRestreamer(channelName)) {
       const restreamer = this.getRestreamer(channelName);
-      restreamer.stop();
+      restreamer.stopRestreamer();
       this.setRestreamer(channelName, null);
     }
   }

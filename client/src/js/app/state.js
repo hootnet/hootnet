@@ -4,7 +4,7 @@ const state = {
     "Mike": "bg-green-200",
     "Noel": "bg-blue-200",
     "Jess": "bg-orange-200",
-    "Neale": "bg-teal-200"
+    "Neale": "bg-indigo-300"
   },
   testWindow: '',
   streamInProgress: false,

@@ -24,22 +24,22 @@ const actionOps = {
       state.streamInProgress = value
     }
   },
-  
+
   onReload({ state, actions }) {
     console.log("Reloading")
-    if(!state.hasLoaded){
+    if (!state.hasLoaded) {
       state.hasLoaded = true
-      setTimeout(()=> actions.onReload(),10)
+      setTimeout(() => actions.onReload(), 10)
     } else {
 
-    // myWindow.actions = actions
-    // myWindow.state = state
-    // actions.tests._init()
-    // myWindow.setState = (path, value) => {
-    //   actions.setState({ path, value })
-    // }
+      // myWindow.actions = actions
+      // myWindow.state = state
+      // actions.tests._init()
+      // myWindow.setState = (path, value) => {
+      //   actions.setState({ path, value })
+      // }
 
-      actions.setCascadeOrder("mike-noel")
+      actions.setCascadeOrder("mike-noel-neale")
       actions.setWarning(`Session name is ${state.attrs.name}`)
       actions.setTestWindow('')
       // actions.exec("all: setWarning 'Ready for a test?'")
@@ -205,10 +205,7 @@ const actionOps = {
     const toList = actions.processTo(parse.to)
     toList.map(to => actions.relayAction({ to, op: 'doAction', data: { action: parse.op, arg: parse.arg } }))
   },
-  cascade({ state, actions }) {
-    state.currentWindow = "cascade";
-    actions.startTheCascade()
-  },
+
   doAction({ actions }, action) {
     if (typeof action !== 'object') {
       action = { action }
@@ -218,6 +215,7 @@ const actionOps = {
       return
     }
     actions[action.action](action.arg)
+    actions.setMessage(`${action.action}(${action.arg})`)
   },
   editor: {
     set({ state }, text) {
@@ -528,12 +526,16 @@ const actionOps = {
   prepareTheCascade({ state, actions }) {
     //Bail out if this is not part of the cascade
     // debugger
-    if(!state.cascadeOrder){
+    if (!state.cascadeOrder) {
       const keys = Object.keys(state.users)
-      actions.setCascadeOrder(keys.join('-'))
+      state.cascadeOrder = (keys.join('-'))
     }
+    actions.setStreamInProgress(false)
+    actions.setCascadeOrder(state.cascadeOrder)
     if (state.sessions.cascaders.length < 2) {
-      actions.setError("cascade has not been set up")
+      actions.setError(`Order: ${state.cascadeOrder}`)
+    } else {
+      actions.setMessage(`Order: ${state.cascadeOrder}`)
     }
     if (!actions.isCascader()) return
     const localStream = json(state.streams.localStream)
@@ -542,14 +544,16 @@ const actionOps = {
     if (actions.isControllerRegistered()) {
       actions.getControllerConnector()
         .createDefaultStream(localStream);
+
     }
     //set up cascading streams
 
-    const incomingControlVideo = document.createElement('video')
     let incomingStream, outboundStream = null
     const BLOB_CHANNEL = 'BlobChannel';
 
+    let incomingControlVideo
     if (!actions.isFirstCascader()) {
+      incomingControlVideo = document.createElement('video')
       const inboundConnector = actions.getInboundConnector()
       inboundConnector.receiveStream(
         BLOB_CHANNEL,
@@ -588,7 +592,7 @@ const actionOps = {
       if (!actions.isFirstCascader()) {
         //ended, stalled
         incomingControlVideo.addEventListener("canplay", () => {
-          actions.incomingCanPlay()
+          // actions.incomingCanPlay()
           outboundConnector.startDefaultStream();
           outboundConnector.sendText("starting the cascade")
           if (actions.isControllerRegistered()) {
@@ -601,8 +605,16 @@ const actionOps = {
             width: merger.width,
             height: merger.height
           });
-          incomingControlVideo.addEventListener("ended", () => {
-            outboundConnector.stopDefaultStream();
+          "pause.stalled,ended,suspend,waiting,canplay".split(',').forEach(event => {
+            incomingControlVideo.addEventListener(event, () => {
+              console.log("incoming", event)
+            })
+          })
+
+          incomingControlVideo.addEventListener("stalled", () => {
+            console.log("Stream ended")
+            const outboundConnector = actions.getOutboundConnector()
+            outboundConnector().stopDefaultStream();
             outboundConnector.sendText("stupping the cascade")
             if (actions.isControllerRegistered()) {
               actions.getControllerConnector().stopDefaultStream()
@@ -652,8 +664,8 @@ const actionOps = {
       outboundConnector.sendText("starting the cascade")
     }
   },
-  endTheCascade({ state, actions }) {
-    if (!actions.isControllerRegistered()) {
+  stopTheCascade({ state, actions }) {
+    if (actions.isControllerRegistered()) {
       actions.getControllerConnector()
         .stopDefaultStream()
     }
@@ -661,6 +673,7 @@ const actionOps = {
       actions.getOutboundConnector()
         .stopDefaultStream()
     }
+    actions.setCurrentWindow('chat')
   },
   setController({ state, actions }, name) {
     if (name !== state.attrs.name) {
