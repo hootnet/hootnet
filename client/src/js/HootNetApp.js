@@ -108,7 +108,7 @@ emptyStream.setTitle('Mike')
 const WrapApp = () => {
   const { state, actions, effects } = useApp()
 
-  return <div>
+  return <div id="wrap" className={ state.colors[state.attrs.name] }>
 
 
     <HeaderWindow />

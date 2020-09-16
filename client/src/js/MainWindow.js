@@ -107,6 +107,7 @@ function MainWindow() {
                     variant="contained"
                     color="primary"
                     onClick={ actions.prepareTheCascade }
+                  // onClick={ () => actions.exec("all: prepareTheCascade") }
                   >
                     Cascade
               {/* </Button>

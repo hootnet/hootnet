@@ -1,5 +1,11 @@
 const state = {
   title: 'This title',
+  colors: {
+    "Mike": "bg-green-200",
+    "Noel": "bg-blue-200",
+    "Jess": "bg-orange-200",
+    "Neale": "bg-teal-200"
+  },
   testWindow: '',
   streamInProgress: false,
   changeMedia: false,

@@ -6,16 +6,16 @@ import PeerConnection from "../PeerConnection";
 import { Action } from "overmind";
 import { string } from "prop-types";
 
-type SessionID = string;
+// type SessionID = string;
 
-type Window = {
-  actions: { [name: string]: any };
-  state: { [name: string]: any };
-  setState: (path: string, value: any) => void;
-  location: any;
-  open: (url: string, name?: string, specs?: string) => any;
-}
-let myWindow: Window = <any>window
+// type Window = {
+//   actions: { [name: string]: any };
+//   state: { [name: string]: any };
+//   setState: (path: string, value: any) => void;
+//   location: any;
+//   open: (url: string, name?: string, specs?: string) => any;
+// }
+// let myWindow: Window = <any>window
 const actionOps = {
   setStreamInProgress({ state }, value) {
     if (value === undefined) {
@@ -24,19 +24,23 @@ const actionOps = {
       state.streamInProgress = value
     }
   },
-
+  
   onReload({ state, actions }) {
     console.log("Reloading")
-    myWindow.actions = actions
-    myWindow.state = state
-    actions.tests._init()
-    myWindow.setState = (path, value) => {
-      actions.setState({ path, value })
-    }
+    if(!state.hasLoaded){
+      state.hasLoaded = true
+      setTimeout(()=> actions.onReload(),10)
+    } else {
 
-    if (state.attrs.name === "Mike") {
-      actions.setWarning("this is Mike's session")
+    // myWindow.actions = actions
+    // myWindow.state = state
+    // actions.tests._init()
+    // myWindow.setState = (path, value) => {
+    //   actions.setState({ path, value })
+    // }
+
       actions.setCascadeOrder("mike-noel")
+      actions.setWarning(`Session name is ${state.attrs.name}`)
       actions.setTestWindow('')
       // actions.exec("all: setWarning 'Ready for a test?'")
       // actions.prepareTheCascade()
@@ -524,6 +528,10 @@ const actionOps = {
   prepareTheCascade({ state, actions }) {
     //Bail out if this is not part of the cascade
     // debugger
+    if(!state.cascadeOrder){
+      const keys = Object.keys(state.users)
+      actions.setCascadeOrder(keys.join('-'))
+    }
     if (state.sessions.cascaders.length < 2) {
       actions.setError("cascade has not been set up")
     }
@@ -773,7 +781,7 @@ const actionOps = {
   setMembers({ state, actions }, data) {
     const newMembers = data.members.filter(member => !state.members.includes(member))
     const droppedMembers = state.members.filter(member => !data.members.includes(member))
-    console.log("old", json(state.members), "new ", newMembers, "dropped", droppedMembers)
+    // console.log("old", json(state.members), "new ", newMembers, "dropped", droppedMembers)
     state.members = data.members
     newMembers.forEach(member => {
       actions.relayAction({ to: member, op: "getInfo" });
