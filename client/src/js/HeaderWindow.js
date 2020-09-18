@@ -59,7 +59,7 @@ const HeaderWindow = () => {
   return <div>
     { (state.currentWindow === 'chat' && state.testWindow === '' || state.testWindow === 'header') ?
       (<React.Fragment>
-        <VideoTiles /> }
+        <VideoTiles />
       </React.Fragment>)
       : null
     }
