@@ -13,7 +13,7 @@ import Video from "./components/Video";
 import VideoTile from "./VideoTile";
 import VideoTiles from "./VideoTiles";
 import HeaderWindow from "./HeaderWindow";
-
+import WebTiming from "./Pages/TimingTest"
 
 
 
@@ -34,6 +34,9 @@ const WindowConfig = ({ startCallHandler }) => {
             startCall={ startCallHandler }
           />
         );
+      case 'webtiming':
+        console.log("WebTiming")
+        return <WebTiming />
       case 'cascade':
         return <CascadeWindow />;
       case 'control':
