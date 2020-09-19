@@ -60,7 +60,7 @@ const doAsync = async () => {
   const hostName = process.env.HOSTNAME;
   const matcher = hostName ? hostName.match(/^sse-sandbox-(.*)$/) : null
   if (matcher) {
-    configs.devServer.public = `https://${matcher[1]}-${socketConfig.PORT}.sse.codesandbox.io/`;
+    configs.devServer.public = `https://${matcher[1]}-${socketConfig.DEVPORT}.sse.codesandbox.io/`;
     console.log('CONFIG ', configs.devServer.public);
     // configs.devServer.public = 'https://fs76d-5002.sse.codesandbox.io/';
   } else {
