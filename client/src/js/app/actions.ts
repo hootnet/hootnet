@@ -148,10 +148,10 @@ const actionOps = {
     return list.split(',').map(name => actions.sessionOfName(name))
   },
   sessionOfName({ state, actions }, name) {
-    // console.log("TRANSLATE", name)
-    name = name.toLowerCase()
+    if (name) name = name.toLowerCase();
     if (state.users[name]) return name //return if session number passed in
-    const foundSession = Object.keys(state.users).find(session => state.users[session].name.toLowerCase() === name)
+    const foundSession = Object.keys(state.users)
+      .find(session => state.users[session].name && state.users[session].name.toLowerCase() === name)
     if (foundSession) return foundSession
     actions.setError(name + " is not in the cascade")
     return null
@@ -161,6 +161,7 @@ const actionOps = {
       state.currentWindow = "chat"
       return
     }
+
     actions.setCascadeOrder("mike-noel")
     actions.prepareTheCascade()
 

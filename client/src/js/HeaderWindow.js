@@ -15,10 +15,10 @@ const HeaderWindow = () => {
   const { state, actions, effects } = useApp()
   const [stream, setStream] = React.useState(null)
   // const [refs, setRefs] = React.useState({})
-  useEffect(() => {
-    effects.setActionsAndState(actions, state)
-    actions.onReload()
-  }, [])
+  // useEffect(() => {
+  //   effects.setActionsAndState(actions, state)
+  //   actions.onReload()
+  // }, [])
   useEffect(() => {
     // console.log('Effect is applied')
     mediaDevice.on('stream', (stream) => {

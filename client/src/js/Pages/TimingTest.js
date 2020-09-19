@@ -38,7 +38,8 @@ function App() {
   return (
     <div className="text-black">
       <p className="m-2 border border-black" id="buttons" onClick={ onClick }>
-        { "reset,pause,play,end,p-,p+".split(',').map(id => <button className="m-1 bg-white w-12 border border-black" key={ id } id={ id }>{ id }</button>)
+        { "reset,pause,play,end,p-,p+".split(',')
+          .map(id => <button className="m-1 bg-blue-300 w-12 border border-black" key={ id } id={ id }>{ id }</button>)
         }
         {/* <button id="reset">Reset</button>
         <button id="pause">Pause</button>
