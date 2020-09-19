@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "build": "cd client && webpack --config webpack-dev.config.js",
-    "start": "node server/index.js",
+    "oldStart": "node server/index.js",
+    "start": "concurrently --names 'SERVER,CLIENT' --prefix-colors 'yellow,blue' --kill-others 'yarn watch:server' 'yarn watch:client'",
     "watch:client": "webpack-dev-server --config client/webpack-dev.config.js",
     "watch:server": "nodemon --watch server --watch config.js server/index.js",
     "test": "jest"
@@ -63,6 +64,7 @@
     "@babel/preset-typescript": "7.10.4",
     "babel-jest": "26.3.0",
     "babel-plugin-transform-class-properties": "6.24.1",
+    "concurrently": "5.3.0",
     "eslint": "6.8.0",
     "eslint-config-airbnb": "18.1.0",
     "eslint-config-airbnb-base": "14.1.0",
