@@ -11,6 +11,8 @@ const state = {
 
 const actionList = {
   _showComponent({ state }, { component, value }) {
+    //Handle case of event callback
+    if (typeof value === 'object') value = undefined
     if (value === undefined) value = !state._show.component[component]
     state._show.component[component] = value
   },

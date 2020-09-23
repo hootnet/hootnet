@@ -41,7 +41,7 @@ const actionOps = {
 
     actions.setCascadeOrder("mike-noel-neale")
     actions.setWarning(`Session name is ${state.attrs.name}`)
-    actions.setTestWindow('')
+    actions.setTestWindow('videoeditor')
     // actions.exec("all: setWarning 'Ready for a test?'")
     // actions.prepareTheCascade()
     // console.log("DONE")

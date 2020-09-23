@@ -8,6 +8,7 @@ import { useApp } from './app';
 import StreamRecorderDemo from './components/StreamRecorderDemo'
 import Template from "./components/Template";
 import Message from "./components/Message";
+import VideoEditor from './Pages/VideoEditor'
 
 import Video from "./components/Video";
 import VideoTile from "./VideoTile";
@@ -26,6 +27,8 @@ const WindowConfig = ({ startCallHandler }) => {
     if (state.testWindow) testWindow = state.testWindow
     switch (testWindow) {
       // switch ('main') {
+      case "videoeditor":
+      return <VideoEditor/>
       case 'main':
       case 'chat':
         return (

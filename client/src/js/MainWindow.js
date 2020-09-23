@@ -7,6 +7,7 @@ import UserList from './UserList'
 import MediaSelector from "./MediaSelector";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
+import DirectorPage from './DirectorPage';
 
 import { makeStyles } from "@material-ui/core/styles";
 import { H1, H3 } from './Typography';
@@ -164,6 +165,16 @@ function MainWindow() {
                   >
                     Change
               </Button>
+                </div>
+                <div className="inline m-2">
+                  <Button
+                    variant="contained"
+                    // disabled={state._show.component.director}
+                    color="primary"
+                    onClick={ actions._show.showDirector }
+                  >
+                    Director
+              </Button>
 
                   {/* </Button>
                   <Button
@@ -191,8 +202,12 @@ function MainWindow() {
                       Open
                 </Button> */}
                 </div>
-                <div className="m-2"></div>
-                { state.changeMedia ? <MediaSelector /> : <UserList /> }
+                <div className="m-2">
+                  { state._show.component.director ?
+                    <DirectorPage /> : null }
+                  { state.changeMedia ?
+                    <MediaSelector /> : <UserList /> }
+                </div>
               </div>
 
             </div>
