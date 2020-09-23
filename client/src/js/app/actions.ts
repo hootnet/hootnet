@@ -27,38 +27,38 @@ const actionOps = {
 
   onReload({ state, actions }) {
     console.log("Reloading")
-    if (!state.hasLoaded) {
-      state.hasLoaded = true
-      setTimeout(() => actions.onReload(), 10)
-    } else {
+    // if (!state.hasLoaded) {
+    //   state.hasLoaded = true
+    //   setTimeout(() => actions.onReload(), 10)
+    // } else {
 
-      // myWindow.actions = actions
-      // myWindow.state = state
-      // actions.tests._init()
-      // myWindow.setState = (path, value) => {
-      //   actions.setState({ path, value })
-      // }
+    // myWindow.actions = actions
+    // myWindow.state = state
+    // actions.tests._init()
+    // myWindow.setState = (path, value) => {
+    //   actions.setState({ path, value })
+    // }
 
-      actions.setCascadeOrder("mike-noel-neale")
-      actions.setWarning(`Session name is ${state.attrs.name}`)
-      actions.setTestWindow('')
-      // actions.exec("all: setWarning 'Ready for a test?'")
-      // actions.prepareTheCascade()
-      // console.log("DONE")
-      // actions.exec("all: setController mike")
-      // actions.exec("all: prepareTheCascade")
-      // actions.exec("neale: startTheCascade")
+    actions.setCascadeOrder("mike-noel-neale")
+    actions.setWarning(`Session name is ${state.attrs.name}`)
+    actions.setTestWindow('')
+    // actions.exec("all: setWarning 'Ready for a test?'")
+    // actions.prepareTheCascade()
+    // console.log("DONE")
+    // actions.exec("all: setController mike")
+    // actions.exec("all: prepareTheCascade")
+    // actions.exec("neale: startTheCascade")
 
-      // actions.tests._parseCommand()
-      // actions.cascade()
-      // actions.openWindow({ name: "window10", spec: "left=200,height=200,width=200" })
-      // actions.openWindow({ name: "window27", spec: "left=600,height=200,width=200" })
+    // actions.tests._parseCommand()
+    // actions.cascade()
+    // actions.openWindow({ name: "window10", spec: "left=200,height=200,width=200" })
+    // actions.openWindow({ name: "window27", spec: "left=600,height=200,width=200" })
 
-      // actions.tests._setMessage()
-      // actions.tests.clearResults()
-      // // actions.tests._sessionOfName()
-      // actions.tests._setCascadeOrder()
-    }
+    // actions.tests._setMessage()
+    // actions.tests.clearResults()
+    // // actions.tests._sessionOfName()
+    // actions.tests._setCascadeOrder()
+    // }
   },
   setState({ state }, { pathString, value }: { pathString: string, value: string }): void {
     const path: Array<string> = pathString.split(".")
@@ -256,7 +256,7 @@ const actionOps = {
 
   setMediaDevices({ state, actions }, mediaDevices) {
     state.mediaDevices = mediaDevices
-    actions.joinRoom()
+    if (state.attrs.roomStatus === 'joined') actions.joinRoom()
   },
   getMediaDevices({ state }) {
     navigator.mediaDevices.enumerateDevices().then((devices) => {
@@ -346,7 +346,9 @@ const actionOps = {
       // actions.setRemoteStream({ member, stream: newStream })
 
 
-      if (actions.initiatesTo(member)) {
+      if (!actions.initiatesTo(member)) {
+        actions.relayAction({ to: member, op: "info", data: json(state.attrs) });
+      } else {
         if (actions.getRemoteStream(member)) return
         if (state.users[member].recentlyConnected) return
         state.users[member].recentlyConnected = true
@@ -852,7 +854,7 @@ const actionOps = {
     // state.index = state.sessions.cascaders.findIndex(e => e === state.attrs.id);
   },
   sendUserInfo({ state, actions }, request) {
-    const data = Object.assign(json(state.attrs), request);
+    const data = Object.assign(json(state.attrs));
     actions.relayAction({ to: request.from, op: "info", data });
   },
   broadcastUserInfo({ state, actions }) {

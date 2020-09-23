@@ -44,8 +44,8 @@ class App extends Component {
       .on('init', (attrs) => {
         // this.effects.socket.actions.gotEvent('init')
         const clientId = attrs.id
-        this.actions.setId(attrs.id)
-        document.title = `${clientId} - VideoCall`;
+        // this.actions.setId(attrs.id)
+        // document.title = `${clientId} - VideoCall`;
         this.setState({ clientId });
         // socket.emit('debug', `App initted ${clientId}`)
 
@@ -69,7 +69,7 @@ class App extends Component {
         } else pc.addIceCandidate(data.candidate);
       })
       .on('end', (data) => this.endCall.bind(this, false)(data.from))
-      .emit('init', this.oState.attrs);
+    // .emit('init', this.oState.attrs);
   }
 
   startCall(isCaller, friendID, config, data) {

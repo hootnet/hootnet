@@ -19,7 +19,7 @@ const Base = () => {
 
       .emit('init', state.attrs);
     effects.setActionsAndState(actions, state)
-    actions.onReload()
+    setTimeout(actions.onReload, 100)
   }, [])
   return (
     <App />)
