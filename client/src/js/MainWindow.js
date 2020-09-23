@@ -55,48 +55,63 @@ function MainWindow() {
   return (
     <div className="bg-wite">
       <div style={ { textAlign: 'center', width: '100%' } }>
-        <H1> HootNet </H1>
-        <H3> make music together </H3>
+        { state._show.component.registration ? <div>
+          <H1> HootNet </H1>
+          <H3> make music together </H3>
+        </div> : null }
         <form className={ classes.root } noValidate autoComplete="off">
           <div className="m-4  w-full">
 
             <div>
               <div className=" w-full p-10">
-                <TextField
-                  id="outlined-name"
-                  label="Room"
-                  value={ roomID }
-                  onChange={ (event) => setRoomID(event.target.value) }
-                  variant="outlined"
-                />
-                <br />
+                { state._show.component.registration ?
+                  <div id="regText">
 
-                <TextField
-                  id="outlined-name"
-                  label="Name"
-                  error={ !userIdIsValid() }
-                  helperText={ !userIdIsValid() ? "You must enter a Name" : "" }
-                  value={ userID }
-                  onChange={ (event) => setUserID(event.target.value) }
-                  variant="outlined"
-                />
+                    <TextField
+                      id="outlined-name"
+                      label="Room"
+                      value={ roomID }
+                      onChange={ (event) => setRoomID(event.target.value) }
+                      variant="outlined"
+                    />
+                    <br />
 
-                <br />
-                <TextField
-                  id="outlined-name"
-                  label="Control"
-                  value={ controlValue }
-                  onChange={ (event) => setControlValue(event.target.value) }
-                  variant="outlined"
-                />
-                <br />
+                    <TextField
+                      id="outlined-name"
+                      label="Name"
+                      error={ !userIdIsValid() }
+                      helperText={ !userIdIsValid() ? "You must enter a Name" : "" }
+                      value={ userID }
+                      onChange={ (event) => setUserID(event.target.value) }
+                      variant="outlined"
+                    />
+
+                    <br />
+                    <TextField
+                      id="outlined-name"
+                      label="Control"
+                      value={ controlValue }
+                      onChange={ (event) => setControlValue(event.target.value) }
+                      variant="outlined"
+                    />
+                    <br />
+                  </div> : null }
                 <div className="inline m-2">
                   <Button
                     type="Button"
                     variant="contained"
                     disabled={ !userIdIsValid() || !controlValueIsValid() || !roomIsValid() }
                     color="primary"
-                    onClick={ () => actions.register({ roomID, controlValue, userID }) }
+                    onClick={ () => {
+                      if (state._show.component.registration) {
+                        actions.register({ roomID, controlValue, userID })
+                        actions._show.showRegistration()
+
+                      } else {
+                        actions._show.showRegistration()
+                      }
+
+                    } }
                   >
                     Register
                          </Button>
