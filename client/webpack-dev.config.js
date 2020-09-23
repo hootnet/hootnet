@@ -11,7 +11,7 @@ const configs = addBaseConfig({
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.[jt]s[x]?$/,
         enforce: 'pre',
         use: ['source-map-loader']
       }
