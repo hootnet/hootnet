@@ -347,7 +347,9 @@ const actionOps = {
 
 
       if (!actions.initiatesTo(member)) {
-        actions.relayAction({ to: member, op: "info", data: json(state.attrs) });
+        if (member !== state.attrs.id) {
+          actions.relayAction({ to: member, op: "info", data: json(state.attrs) });
+        }
       } else {
         if (actions.getRemoteStream(member)) return
         if (state.users[member].recentlyConnected) return
